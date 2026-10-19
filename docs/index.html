@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="GeM goods bids for Dhanbad district, updated three times a day.">
+<title>Dhanbad GeM Tenders</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+.help{margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 14px}
+.help summary{cursor:pointer;font-weight:600;font-size:14px}
+.help ol{margin:10px 0 4px;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.stale{color:var(--soon);font-weight:600}
+
+/* Layout: a docket list. A sticky search bar sits over one column of bid cards; each card leads with a tear-off closing-date block. */
+:root{
+  --bg:#F2F5F4; --surface:#FFFFFF; --sunk:#E9EEED; --ink:#16201E; --muted:#56635F; --line:#D5DDDB;
+  --accent:#0D6A70; --accent-ink:#FFFFFF; --accent-soft:#DBECEC;
+  --live:#1C7543; --live-soft:#DCF0E3; --soon:#AD4F06; --soon-soft:#FAE7D4;
+  --closed:#68726F; --closed-soft:#E5EAE9; --corr:#6A3E9E; --corr-soft:#EDE4F7; --danger:#B3261E;
+  --star:#B7791F;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1413; --surface:#161F1E; --sunk:#111918; --ink:#E4ECEA; --muted:#98A7A3; --line:#273331;
+  --accent:#53B8BD; --accent-ink:#0A1212; --accent-soft:#163A3C;
+  --live:#62CB8E; --live-soft:#163024; --soon:#F0A35E; --soon-soft:#3A2614;
+  --closed:#909D9A; --closed-soft:#202A28; --corr:#BC9BEA; --corr-soft:#2C2340; --danger:#F2857D;
+  --star:#E8B04B; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0E1413; --surface:#161F1E; --sunk:#111918; --ink:#E4ECEA; --muted:#98A7A3; --line:#273331;
+  --accent:#53B8BD; --accent-ink:#0A1212; --accent-soft:#163A3C;
+  --live:#62CB8E; --live-soft:#163024; --soon:#F0A35E; --soon-soft:#3A2614;
+  --closed:#909D9A; --closed-soft:#202A28; --corr:#BC9BEA; --corr-soft:#2C2340; --danger:#F2857D;
+  --star:#E8B04B; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:860px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+a{color:var(--accent)}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* Header */
+header.top{padding-block:22px 10px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(34px,7vw,46px);line-height:1;letter-spacing:.005em;margin:6px 0 8px;text-wrap:balance}
+.lede{margin:0;color:var(--muted);max-width:62ch}
+.status-line{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-top:14px;font-size:13px;color:var(--muted)}
+.status-line .dot{width:8px;height:8px;border-radius:50%;background:var(--live);display:inline-block;margin-right:6px;vertical-align:1px}
+.status-line .dot.busy{background:var(--soon);animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.status-line .dot.busy{animation:none}}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;color:var(--ink);min-height:34px}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn[disabled]{opacity:.55;cursor:default}
+.note{font-size:13px;color:var(--muted);margin:8px 0 0}
+.note.warn{color:var(--soon)}
+
+/* Summary counts (also filters) */
+.counts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:16px}
+.count{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:10px 12px;text-align:left;cursor:pointer;min-width:0}
+.count b{display:block;font-family:var(--f-display);font-size:30px;line-height:1;font-weight:700;font-variant-numeric:tabular-nums}
+.count span{font-size:12px;color:var(--muted)}
+.count.live b{color:var(--live)} .count.soon b{color:var(--soon)} .count.corr b{color:var(--corr)} .count.closed b{color:var(--closed)}
+.count[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+@media (max-width:520px){.counts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Sticky search bar */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:12px 10px;margin-top:12px;border-bottom:1px solid var(--line)}
+.search-row{display:flex;gap:8px}
+.search{flex:1;min-width:0;position:relative}
+.search input{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:10px 12px 10px 36px;min-height:44px}
+.search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--muted);pointer-events:none}
+.filter-toggle{border-radius:var(--r);min-height:44px;padding:0 14px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-top:10px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.panel{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding-top:12px}
+.panel label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);min-width:0}
+.panel select{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 10px;min-height:40px;width:100%;min-width:0;color:var(--ink);font-size:14px}
+.panel .reset{grid-column:1/-1;justify-self:start}
+@media (max-width:640px){.panel{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.result-line{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--muted);padding-block:12px 4px}
+
+/* Cards */
+.list{display:flex;flex-direction:column;gap:10px;padding-bottom:12px}
+.card{display:grid;grid-template-columns:64px minmax(0,1fr);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.card[data-closed]{opacity:.86}
+.date{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:12px 4px;border-right:1px dashed var(--line);background:var(--sunk);text-align:center}
+.date .d{font-family:var(--f-display);font-weight:700;font-size:30px;line-height:1}
+.date .m{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+.date .t{font-family:var(--f-mono);font-size:11px;color:var(--muted);margin-top:6px}
+.date .k{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.card[data-tone="live"] .date .d{color:var(--live)}
+.card[data-tone="soon"] .date .d{color:var(--soon)}
+.card[data-tone="closed"] .date .d{color:var(--closed)}
+.body{padding:12px 14px;min-width:0}
+.tags{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:6px}
+.pill{font-size:11.5px;font-weight:600;border-radius:999px;padding:2px 9px;line-height:1.5}
+.pill.live{background:var(--live-soft);color:var(--live)}
+.pill.soon{background:var(--soon-soft);color:var(--soon)}
+.pill.closed{background:var(--closed-soft);color:var(--closed)}
+.pill.corr{background:var(--corr-soft);color:var(--corr)}
+.pill.warn{background:var(--soon-soft);color:var(--danger)}
+.buyer{font-size:12.5px;color:var(--muted)}
+.buyer strong{color:var(--ink);font-weight:600}
+h2.title{font-size:16px;font-weight:600;line-height:1.35;margin:2px 0 6px;text-wrap:pretty;overflow-wrap:anywhere}
+.meta{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--muted)}
+.meta b{color:var(--ink);font-weight:600}
+.bidno{font-family:var(--f-mono);font-size:12.5px;color:var(--ink);background:var(--sunk);border:1px solid var(--line);border-radius:6px;padding:1px 6px;cursor:pointer;user-select:all}
+.preview{margin:8px 0 0;font-size:13.5px;color:var(--ink);overflow-wrap:anywhere}
+.preview span{color:var(--muted)}
+.actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.actions .btn{font-size:12.5px;padding:5px 12px;min-height:32px}
+.star{border:none;background:none;cursor:pointer;font-size:20px;line-height:1;color:var(--muted);padding:2px 4px;margin-left:auto}
+.star[aria-pressed="true"]{color:var(--star)}
+.detail{margin-top:12px;border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:12px}
+.detail p{margin:0;max-width:68ch}
+.kv{display:grid;grid-template-columns:minmax(110px,max-content) minmax(0,1fr);gap:4px 14px;font-size:13.5px;margin:0}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;overflow-wrap:anywhere}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:520px}
+th,td{text-align:left;vertical-align:top;padding:7px 10px;border-bottom:1px solid var(--line)}
+th{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;background:var(--sunk)}
+tr:last-child td{border-bottom:none}
+td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.corr-box{background:var(--corr-soft);color:var(--ink);border-radius:8px;padding:8px 12px;font-size:13.5px}
+.corr-box b{color:var(--corr)}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:var(--r);padding:28px 20px;text-align:center;color:var(--muted)}
+.empty strong{display:block;color:var(--ink);font-size:16px;margin-bottom:4px}
+footer{padding-block:18px 36px;font-size:13px;color:var(--muted);border-top:1px solid var(--line);margin-top:16px}
+footer p{margin:0 0 8px;max-width:72ch}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:13px;z-index:20;max-width:calc(100% - 32px)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">Government e-Marketplace · Goods bids · Dhanbad district</div>
+    <h1>Dhanbad GeM Tenders</h1>
+    <p class="lede">Goods bids from BCCL, ECL Mugma Area, East Central Railway, DVC, HURL Sindri, IIT (ISM) and other Dhanbad buyers. Live bids plus the last two months, with corrigenda marked.</p>
+    <div class="status-line">
+      <span id="updated"><span class="dot" id="dot"></span>Loading…</span>
+    </div>
+    <details class="help" id="help">
+      <summary>Kaise use karein</summary>
+      <ol>
+        <li>Upar ke dabbe dabaiye: <b>Open for bidding</b> matlab abhi bid lag sakti hai, <b>Closing in 3 days</b> matlab jaldi band honge.</li>
+        <li>Search box mein item ka naam likhiye, jaise <b>cable</b>, <b>MCCB</b>, <b>wire</b>, <b>bearing</b>.</li>
+        <li><b>Filters</b> dabakar buyer (BCCL, ECL Mugma, Railways…) aur area chuniye.</li>
+        <li><b>Details &amp; specs</b> dabane par saare items, quantity, specification, EMD aur delivery ke din dikhte hain.</li>
+        <li><b>Bid PDF (GeM)</b> dabane par GeM ki asli bid PDF khulti hai. Bid lagane se pehle wahi padhiye.</li>
+        <li>☆ dabakar tender save kijiye. Saved tender <b>★ Saved</b> mein milenge.</li>
+        <li>Ye list roz teen baar (lagbhag subah 8, dopahar 1 aur shaam 7 baje) apne aap update hoti hai. Upar <b>Updated</b> ka time dekhiye.</li>
+      </ol>
+    </details>
+    <div class="counts" id="counts">
+      <button class="count live" type="button" data-status="live" aria-pressed="false"><b id="cLive">–</b><span>Open for bidding</span></button>
+      <button class="count soon" type="button" data-status="soon" aria-pressed="false"><b id="cSoon">–</b><span>Closing in 3 days</span></button>
+      <button class="count corr" type="button" data-status="corr" aria-pressed="false"><b id="cCorr">–</b><span>With corrigendum</span></button>
+      <button class="count closed" type="button" data-status="closed" aria-pressed="false"><b id="cClosed">–</b><span>Closed, last 60 days</span></button>
+    </div>
+  </header>
+
+  <div class="bar" id="bar">
+    <div class="search-row">
+      <label class="search">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg>
+        <input id="q" type="search" placeholder="Search item, bid number, buyer, area…" autocomplete="off" aria-label="Search bids">
+      </label>
+      <button class="btn filter-toggle" id="filterBtn" type="button" aria-expanded="false" aria-controls="panel">Filters</button>
+    </div>
+    <div class="chips" id="chips" role="group" aria-label="Status">
+      <button class="chip" type="button" data-status="live" aria-pressed="true">Open</button>
+      <button class="chip" type="button" data-status="soon" aria-pressed="false">Closing ≤ 3 days</button>
+      <button class="chip" type="button" data-status="corr" aria-pressed="false">Corrigendum</button>
+      <button class="chip" type="button" data-status="closed" aria-pressed="false">Closed</button>
+      <button class="chip" type="button" data-status="all" aria-pressed="false">All</button>
+      <button class="chip" type="button" data-status="saved" aria-pressed="false">★ Saved</button>
+    </div>
+    <div class="panel" id="panel" hidden>
+      <label for="fGroup">Buyer<select id="fGroup"></select></label>
+      <label for="fArea">Area / office<select id="fArea"></select></label>
+      <label for="fMin">Ministry<select id="fMin"></select></label>
+      <label for="fSort">Sort<select id="fSort">
+        <option value="close">Closing date, soonest first</option>
+        <option value="new">Newest published first</option>
+        <option value="closeDesc">Closing date, latest first</option>
+      </select></label>
+      <button class="btn reset" type="button" id="resetBtn">Clear filters</button>
+    </div>
+  </div>
+
+  <div class="result-line"><span id="resultCount"></span><span id="todayLine"></span></div>
+  <main class="list" id="list">
+    <div class="empty"><strong>Loading bids…</strong></div>
+  </main>
+
+  <footer>
+    <p><b>Where the data comes from.</b> Public tender listings on Tender247 and Tenderlelo, read by a small program on GitHub three times a day. "Bid PDF (GeM)" opens the official bid document on bidplus.gem.gov.in.</p>
+    <p>Always check the bid PDF and any corrigendum on GeM before you bid. Closing dates and quantities can change after the last refresh. Bids older than two months are removed automatically.</p>
+  </footer>
+</div>
+<div class="toast" id="toast" hidden></div>
+<script>
+(function(){
+  "use strict";
+  var DAY = 86400000;
+  var STORE_KEY = "dgt.v1";
+  var bids = [];
+  var meta = null;
+  var state = {status:"live", q:"", group:"", area:"", min:"", sort:"close", open:{}};
+  var saved = {};
+  var refreshBusy = false;
+
+  function load(){ try{ var s = JSON.parse(localStorage.getItem(STORE_KEY) || "{}"); if(s.state){ ["status","group","area","min","sort"].forEach(function(k){ if(typeof s.state[k]==="string") state[k]=s.state[k]; }); } if(s.saved) saved = s.saved; }catch(e){} }
+  function persist(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify({state:{status:state.status,group:state.group,area:state.area,min:state.min,sort:state.sort}, saved:saved})); }catch(e){} }
+  load();
+
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function safeUrl(u){ return /^https:\/\//i.test(u || "") ? u : ""; }
+
+  /* Dates are compared in India time (IST, UTC+5:30). */
+  function todayIST(){ return new Date(Date.now() + 5.5*3600000).toISOString().slice(0,10); }
+  function dnum(s){ var p = (s||"").split("-"); return p.length===3 ? Date.UTC(+p[0], +p[1]-1, +p[2]) : NaN; }
+  var MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  function fmtDate(s){ var t = dnum(s); if(isNaN(t)) return ""; var d = new Date(t); return d.getUTCDate()+" "+MON[d.getUTCMonth()]+" "+d.getUTCFullYear(); }
+  function fmtTime(t){ if(!/^\d{1,2}:\d{2}$/.test(t||"")) return ""; var p=t.split(":"), h=+p[0], m=p[1]; var ap = h>=12?"PM":"AM"; h = h%12 || 12; return h+(m==="00"?"":":"+m)+" "+ap; }
+
+  function classify(b, today){
+    var note = (b.status_note||"").toLowerCase();
+    var t0 = dnum(today), te = dnum(b.end_date);
+    var left = isNaN(te) ? null : Math.round((te - t0)/DAY);
+    var r = {left:left, tone:"live", label:"", closed:false, special:""};
+    if(/withdrawn|cancel/.test(note)){ r.closed = true; r.tone="closed"; r.label="Withdrawn"; r.special="warn"; return r; }
+    if(left === null){ r.label = "Closing date not stated"; return r; }
+    var passedToday = false;
+    if(left === 0 && /^\d{1,2}:\d{2}$/.test(b.end_time||"")){
+      var nowIST = new Date(Date.now() + 5.5*3600000), p = b.end_time.split(":");
+      passedToday = nowIST.getUTCHours()*60 + nowIST.getUTCMinutes() >= (+p[0])*60 + (+p[1]);
+    }
+    if(left < 0 || passedToday){ r.closed = true; r.tone = "closed"; r.label = passedToday ? "Closed today" : "Closed"; }
+    else if(left === 0){ r.tone="soon"; r.label="Closes today"; }
+    else if(left <= 3){ r.tone="soon"; r.label = "Closes in "+left+" day"+(left>1?"s":""); }
+    else { r.label = left+" days left"; }
+    if(/pre-nit/.test(note)){ r.special="warn"; }
+    return r;
+  }
+  function inWindow(b, today){
+    var cut = dnum(today) - 60*DAY;
+    var s = dnum(b.start_date), e = dnum(b.end_date);
+    if(!isNaN(e) && e >= dnum(today)) return true;
+    if(!isNaN(s) && s >= cut) return true;
+    if(isNaN(s) && !isNaN(e) && e >= cut) return true;
+    return false;
+  }
+
+  function haystack(b){
+    var items = (b.items||[]).map(function(i){ return [i.name,i.spec].join(" "); }).join(" ");
+    return [b.title,b.bid_no,b.buyer,b.group,b.area,b.ministry,b.office,b.consignee,b.summary,items].join(" ").toLowerCase();
+  }
+
+  function fillSelect(sel, values, current, allLabel){
+    var html = '<option value="">'+esc(allLabel)+'</option>';
+    values.forEach(function(v){ html += '<option value="'+esc(v[0])+'">'+esc(v[0])+' ('+v[1]+')</option>'; });
+    sel.innerHTML = html;
+    sel.value = values.some(function(v){ return v[0]===current; }) ? current : "";
+  }
+  function tally(list, key){
+    var m = {}; list.forEach(function(b){ var k=b[key]; if(k) m[k]=(m[k]||0)+1; });
+    return Object.keys(m).sort(function(a,b){ return m[b]-m[a] || a.localeCompare(b); }).map(function(k){ return [k,m[k]]; });
+  }
+
+  function render(){
+    var today = todayIST();
+    var pool = bids.filter(function(b){ return inWindow(b, today); });
+    pool.forEach(function(b){ b._c = classify(b, today); });
+
+    var openN = 0, soonN = 0, corrN = 0, closedN = 0;
+    pool.forEach(function(b){ if(!b._c.closed){ openN++; if(b._c.left!==null && b._c.left<=3) soonN++; } else closedN++; if(b.corrigendum && !b._c.closed) corrN++; });
+    $("cLive").textContent = openN; $("cSoon").textContent = soonN; $("cCorr").textContent = corrN; $("cClosed").textContent = closedN;
+
+    fillSelect($("fGroup"), tally(pool,"group"), state.group, "All buyers");
+    state.group = $("fGroup").value;
+    var areaPool = state.group ? pool.filter(function(b){ return b.group===state.group; }) : pool;
+    fillSelect($("fArea"), tally(areaPool,"area"), state.area, "All areas");
+    state.area = $("fArea").value;
+    fillSelect($("fMin"), tally(pool,"ministry"), state.min, "All ministries");
+    state.min = $("fMin").value;
+    $("fSort").value = state.sort;
+
+    var q = state.q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    var shown = pool.filter(function(b){
+      var c = b._c;
+      if(state.status==="live" && c.closed) return false;
+      if(state.status==="soon" && (c.closed || c.left===null || c.left>3)) return false;
+      if(state.status==="corr" && (!b.corrigendum || c.closed)) return false;
+      if(state.status==="closed" && !c.closed) return false;
+      if(state.status==="saved" && !saved[b.bid_no]) return false;
+      if(state.group && b.group!==state.group) return false;
+      if(state.area && b.area!==state.area) return false;
+      if(state.min && b.ministry!==state.min) return false;
+      if(q.length){ var h = b._h || (b._h = haystack(b)); for(var i=0;i<q.length;i++){ if(h.indexOf(q[i])<0) return false; } }
+      return true;
+    });
+    var big = 9e15;
+    shown.sort(function(a,b){
+      if(state.sort==="new"){ return (dnum(b.start_date)||0) - (dnum(a.start_date)||0) || a.bid_no.localeCompare(b.bid_no); }
+      var ea = dnum(a.end_date), eb = dnum(b.end_date); ea = isNaN(ea)?big:ea; eb = isNaN(eb)?big:eb;
+      if(state.sort==="closeDesc") return eb-ea;
+      if(state.status==="all"){ if(a._c.closed!==b._c.closed) return a._c.closed?1:-1; if(a._c.closed) return eb-ea; }
+      if(state.status==="closed") return eb-ea;
+      return ea-eb;
+    });
+
+    document.querySelectorAll("[data-status]").forEach(function(el){ el.setAttribute("aria-pressed", el.getAttribute("data-status")===state.status ? "true":"false"); });
+    var active = (state.group?1:0)+(state.area?1:0)+(state.min?1:0);
+    $("filterBtn").textContent = active ? "Filters ("+active+")" : "Filters";
+    $("resultCount").textContent = bids.length ? shown.length+" bid"+(shown.length===1?"":"s")+" shown" : "";
+    $("todayLine").textContent = "Today: "+fmtDate(today);
+
+    var list = $("list");
+    if(!bids.length){ return; }
+    if(!shown.length){
+      list.innerHTML = '<div class="empty"><strong>No bids match</strong>Try another word, clear the filters, or switch to “All”.</div>';
+      return;
+    }
+    list.innerHTML = shown.map(card).join("");
+  }
+
+  function card(b){
+    var c = b._c, id = esc(b.bid_no), open = !!state.open[b.bid_no];
+    var te = dnum(b.end_date), d = isNaN(te) ? null : new Date(te);
+    var dateBlock = d ? '<div class="k">'+(c.closed?"Closed":"Closes")+'</div><div class="d">'+d.getUTCDate()+'</div><div class="m">'+MON[d.getUTCMonth()]+'</div>'+(b.end_time?'<div class="t">'+esc(fmtTime(b.end_time))+'</div>':'') : '<div class="k">Closes</div><div class="d">?</div>';
+    var tags = '<span class="pill '+(c.special==="warn"?"warn":c.tone)+'">'+esc(c.label)+'</span>';
+    if(/pre-nit/i.test(b.status_note||"")) tags += '<span class="pill warn">Pre-NIT</span>';
+    if(b.corrigendum) tags += '<span class="pill corr">Corrigendum</span>';
+    var items = b.items||[];
+    var preview = items.slice(0,3).map(function(i){ return esc(i.name)+(i.qty?' <span>× '+esc(i.qty)+(i.unit?' '+esc(i.unit):'')+'</span>':''); }).join(' · ');
+    if(items.length>3) preview += ' <span>+'+(items.length-3)+' more</span>';
+    var meta = [];
+    if(b.total_qty) meta.push('Qty <b>'+esc(b.total_qty)+'</b>');
+    if(b.emd) meta.push('EMD <b>'+esc(b.emd)+'</b>');
+    if(b.start_date) meta.push('Published '+esc(fmtDate(b.start_date)));
+    var pdf = safeUrl(b.pdf_url);
+    var acts = '';
+    if(pdf) acts += '<a class="btn primary" href="'+esc(pdf)+'" target="_blank" rel="noopener">Bid PDF (GeM)</a>';
+    else acts += '<a class="btn" href="https://bidplus.gem.gov.in/all-bids" target="_blank" rel="noopener">Search on GeM</a>';
+    acts += '<button class="btn" type="button" data-act="toggle" data-id="'+id+'" aria-expanded="'+open+'">'+(open?"Hide details":"Details & specs")+'</button>';
+    acts += '<button class="btn" type="button" data-act="copy" data-id="'+id+'">Copy bid no.</button>';
+    return '<article class="card" data-tone="'+c.tone+'"'+(c.closed?' data-closed':'')+'>'
+      + '<div class="date">'+dateBlock+'</div>'
+      + '<div class="body">'
+      +   '<div class="tags">'+tags+'<button class="star" type="button" data-act="star" data-id="'+id+'" aria-pressed="'+(!!saved[b.bid_no])+'" aria-label="Save this bid">'+(saved[b.bid_no]?"★":"☆")+'</button></div>'
+      +   '<div class="buyer"><strong>'+esc(b.group==="Jharkhand Govt"?b.buyer:b.group)+'</strong>'+(b.area?' · '+esc(b.area):'')+'</div>'
+      +   '<h2 class="title">'+esc(b.title)+'</h2>'
+      +   '<div class="meta"><span class="bidno" data-act="copy" data-id="'+id+'" title="Tap to copy">'+id+'</span>'+meta.map(function(m){return '<span>'+m+'</span>';}).join('')+'</div>'
+      +   (preview?'<p class="preview">'+preview+'</p>':'')
+      +   '<div class="actions">'+acts+'</div>'
+      +   (open?detail(b):'')
+      + '</div></article>';
+  }
+
+  function detail(b){
+    var items = b.items||[];
+    var rows = items.map(function(i,n){
+      return '<tr><td class="num">'+(n+1)+'</td><td>'+esc(i.name)+(i.spec?'<div style="color:var(--muted);margin-top:2px">'+esc(i.spec)+'</div>':'')+'</td><td class="num">'+esc(i.qty||"")+(i.unit?' '+esc(i.unit):'')+'</td><td class="num">'+esc(i.delivery_days?i.delivery_days+" days":"")+'</td><td class="num">'+esc(i.emd||"")+'</td></tr>';
+    }).join('');
+    var kv = [];
+    function add(k,v){ if(v) kv.push('<dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd>'); }
+    add("Buyer", b.buyer);
+    add("Ministry", b.ministry);
+    add("Area / office", [b.area, b.office].filter(Boolean).join(" — "));
+    add("Deliver to", b.consignee);
+    add("Published", [fmtDate(b.start_date), fmtTime(b.start_time)].filter(Boolean).join(", "));
+    add("Closes", [fmtDate(b.end_date), fmtTime(b.end_time)].filter(Boolean).join(", "));
+    add("EMD", b.emd);
+    add("Estimated value", b.est_value);
+    add("Bid type", b.bid_type);
+    add("MSE / startup", b.mse);
+    add("Note", b.status_note);
+    var links = (b.links||[]).map(function(l){ var u = safeUrl(l.url); return u ? '<a class="btn" href="'+esc(u)+'" target="_blank" rel="noopener">'+esc(l.label||"Source")+' page</a>' : ''; }).join('');
+    return '<div class="detail">'
+      + (b.summary?'<p>'+esc(b.summary)+'</p>':'')
+      + (b.corrigendum?'<div class="corr-box"><b>Corrigendum.</b> '+esc(b.corrigendum_note||"A corrigendum was issued. Check the bid PDF on GeM for what changed.")+'</div>':'')
+      + (rows?'<div class="tbl-wrap"><table><thead><tr><th>#</th><th>Item and specification</th><th>Qty</th><th>Delivery</th><th>EMD</th></tr></thead><tbody>'+rows+'</tbody></table></div>':'')
+      + '<dl class="kv">'+kv.join('')+'</dl>'
+      + (links?'<div class="actions">'+links+'</div>':'')
+      + '</div>';
+  }
+
+  /* Events */
+  var tq;
+  $("q").addEventListener("input", function(e){ clearTimeout(tq); tq = setTimeout(function(){ state.q = e.target.value; render(); }, 120); });
+  document.querySelectorAll("[data-status]").forEach(function(el){ el.addEventListener("click", function(){ state.status = el.getAttribute("data-status"); persist(); render(); if(el.classList.contains("count")) $("bar").scrollIntoView({behavior:"smooth", block:"start"}); }); });
+  $("filterBtn").addEventListener("click", function(){ var p = $("panel"); p.hidden = !p.hidden; this.setAttribute("aria-expanded", String(!p.hidden)); });
+  $("fGroup").addEventListener("change", function(e){ state.group = e.target.value; state.area = ""; persist(); render(); });
+  $("fArea").addEventListener("change", function(e){ state.area = e.target.value; persist(); render(); });
+  $("fMin").addEventListener("change", function(e){ state.min = e.target.value; persist(); render(); });
+  $("fSort").addEventListener("change", function(e){ state.sort = e.target.value; persist(); render(); });
+  $("resetBtn").addEventListener("click", function(){ state.group = state.area = state.min = ""; state.q = ""; $("q").value = ""; state.status = "live"; persist(); render(); });
+  $("list").addEventListener("click", function(e){
+    var el = e.target.closest("[data-act]"); if(!el) return;
+    var id = el.getAttribute("data-id"), act = el.getAttribute("data-act");
+    if(act==="toggle"){ state.open[id] = !state.open[id]; render(); }
+    else if(act==="star"){ if(saved[id]) delete saved[id]; else saved[id] = 1; persist(); render(); toast(saved[id] ? "Saved on this device" : "Removed from saved"); }
+    else if(act==="copy"){
+      var done = function(){ toast("Copied "+id); };
+      try{ navigator.clipboard.writeText(id).then(done, function(){ selectText(el); toast("Bid number selected — copy it"); }); }
+      catch(err){ selectText(el); toast("Bid number selected — copy it"); }
+    }
+  });
+  function selectText(el){ try{ var r = document.createRange(); r.selectNodeContents(el); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }catch(e){} }
+  var tt;
+  function toast(msg){ var t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(tt); tt = setTimeout(function(){ t.hidden = true; }, 2200); }
+
+  /* Bids come from bids.json, published next to this page and replaced after every refresh. */
+  function showUpdated(iso){
+    var t = iso ? new Date(iso) : null, up = $("updated");
+    if(!t || isNaN(t)){ up.textContent = "Update time not known"; return; }
+    var hrs = (Date.now() - t.getTime())/3600000;
+    var txt = "Updated "+t.toLocaleString("en-IN",{timeZone:"Asia/Kolkata",day:"numeric",month:"short",hour:"numeric",minute:"2-digit"})+" IST";
+    up.innerHTML = '<span class="dot" id="dot"></span>'+esc(txt)+(hrs>36?' <span class="stale">· list is more than a day old</span>':'');
+  }
+  function loadData(){
+    fetch("bids.json", {cache:"no-store"}).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); }).then(function(d){
+      bids = (d && d.bids || []).filter(function(b){ return b && b.bid_no && b.kind !== "services"; });
+      showUpdated(d && d.generated_at);
+      loadStatus();
+      if(!bids.length) $("list").innerHTML = '<div class="empty"><strong>No bids in the list yet</strong>The next refresh will add them.</div>';
+      render();
+    }).catch(function(){
+      $("updated").textContent = "Could not load the list";
+      $("list").innerHTML = '<div class="empty"><strong>Could not load the bid list</strong>Check your internet and reload the page.</div>';
+    });
+  }
+
+  function loadStatus(){
+    fetch("status.json", {cache:"no-store"}).then(function(r){ return r.ok ? r.json() : null; }).then(function(st){
+      if(!st || st.ok !== false) return;
+      var t = new Date(st.last_run), up = $("updated");
+      if(isNaN(t)) return;
+      var w = document.createElement("span");
+      w.className = "stale";
+      w.textContent = "· Last check on " + t.toLocaleString("en-IN",{timeZone:"Asia/Kolkata",day:"numeric",month:"short",hour:"numeric",minute:"2-digit"}) + " could not read the tender website. Showing the last good list.";
+      up.appendChild(document.createTextNode(" ")); up.appendChild(w);
+    }).catch(function(){});
+  }
+
+  render();
+  loadData();
+
+})();
+</script>
+</body>
+</html>
