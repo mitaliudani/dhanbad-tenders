@@ -9,6 +9,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700&display=swap">
 <style>
+.live{margin-top:14px;background:var(--accent-soft);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.live b{display:block;font-size:14px;margin-bottom:2px}
+.live p{margin:0 0 10px;font-size:13px;color:var(--muted)}
+.live .row{display:flex;flex-wrap:wrap;gap:8px}
 .help{margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 14px}
 .help summary{cursor:pointer;font-weight:600;font-size:14px}
 .help ol{margin:10px 0 4px;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px}
@@ -154,6 +158,16 @@ footer p{margin:0 0 8px;max-width:72ch}
     <div class="status-line">
       <span id="updated"><span class="dot" id="dot"></span>Loading…</span>
     </div>
+    <section class="live" aria-label="Live tender lists">
+      <b>Hamesha live lists (free, roz apne aap update)</b>
+      <p>Ye tender websites khud roz naye Dhanbad bids dikhati hain. Neeche wali list upar likhe "Updated" time tak ki hai. Sabse taaza bids ke liye ye kholiye.</p>
+      <div class="row">
+        <a class="btn primary" href="https://tenderlelo.com/tenders/state/jharkhand/dhanbad/" target="_blank" rel="noopener">Tenderlelo · Dhanbad</a>
+        <a class="btn" href="https://www.tender247.com/gem-tenders/city-tenders/dhanbad-tenders" target="_blank" rel="noopener">Tender247 · Dhanbad GeM</a>
+        <a class="btn" href="https://www.tendershark.com/city/jharkhand/dhanbad-tenders/active" target="_blank" rel="noopener">TenderShark · Dhanbad</a>
+        <a class="btn" href="https://bidplus.gem.gov.in/all-bids" target="_blank" rel="noopener">GeM · All bids</a>
+      </div>
+    </section>
     <details class="help" id="help">
       <summary>Kaise use karein</summary>
       <ol>
