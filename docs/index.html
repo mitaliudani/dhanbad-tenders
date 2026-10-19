@@ -163,7 +163,7 @@ footer p{margin:0 0 8px;max-width:72ch}
         <li><b>Details &amp; specs</b> dabane par saare items, quantity, specification, EMD aur delivery ke din dikhte hain.</li>
         <li><b>Bid PDF (GeM)</b> dabane par GeM ki asli bid PDF khulti hai. Bid lagane se pehle wahi padhiye.</li>
         <li>☆ dabakar tender save kijiye. Saved tender <b>★ Saved</b> mein milenge.</li>
-        <li>Ye list roz teen baar (lagbhag subah 8, dopahar 1 aur shaam 7 baje) apne aap update hoti hai. Upar <b>Updated</b> ka time dekhiye.</li>
+        <li>Ye list har 3 ghante mein naye tender-alert emails padh ke apne aap update hoti hai. Upar <b>Updated</b> ka time dekhiye.</li>
       </ol>
     </details>
     <div class="counts" id="counts">
@@ -209,7 +209,7 @@ footer p{margin:0 0 8px;max-width:72ch}
   </main>
 
   <footer>
-    <p><b>Where the data comes from.</b> Public tender listings on Tender247 and Tenderlelo, read by a small program on GitHub three times a day. "Bid PDF (GeM)" opens the official bid document on bidplus.gem.gov.in.</p>
+    <p><b>Where the data comes from.</b> GeM bid alert emails and tender-site alert emails, read by a small program on GitHub every 3 hours. Only bids that mention Dhanbad district are shown. "Search on GeM" opens GeM's bid search: paste the bid number there to open the official bid and PDF.</p>
     <p>Always check the bid PDF and any corrigendum on GeM before you bid. Closing dates and quantities can change after the last refresh. Bids older than two months are removed automatically.</p>
   </footer>
 </div>
@@ -437,7 +437,7 @@ footer p{margin:0 0 8px;max-width:72ch}
   }
   function loadData(){
     fetch("bids.json", {cache:"no-store"}).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); }).then(function(d){
-      bids = (d && d.bids || []).filter(function(b){ return b && b.bid_no && b.kind !== "services"; });
+      bids = (d && d.bids || []).filter(function(b){ return b && b.bid_no && b.kind !== "services" && b.local !== false; });
       showUpdated(d && d.generated_at);
       loadStatus();
       if(!bids.length) $("list").innerHTML = '<div class="empty"><strong>No bids in the list yet</strong>The next refresh will add them.</div>';
@@ -455,7 +455,7 @@ footer p{margin:0 0 8px;max-width:72ch}
       if(isNaN(t)) return;
       var w = document.createElement("span");
       w.className = "stale";
-      w.textContent = "· Last check on " + t.toLocaleString("en-IN",{timeZone:"Asia/Kolkata",day:"numeric",month:"short",hour:"numeric",minute:"2-digit"}) + " could not read the tender website. Showing the last good list.";
+      w.textContent = "· Last check on " + t.toLocaleString("en-IN",{timeZone:"Asia/Kolkata",day:"numeric",month:"short",hour:"numeric",minute:"2-digit"}) + " could not read the alert emails. Showing the last good list.";
       up.appendChild(document.createTextNode(" ")); up.appendChild(w);
     }).catch(function(){});
   }

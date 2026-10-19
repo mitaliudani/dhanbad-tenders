@@ -1,8 +1,9 @@
 name: Update Dhanbad bids
 
 on:
-  # Paused: Tender247 refuses GitHub's servers (HTTP 403) and Tenderlelo's terms do not allow
-  # automated crawlers, so this does not run on a timer. It can still be started by hand.
+  schedule:
+    # Every 3 hours, at 23 minutes past (UTC). GitHub may start it a few minutes late.
+    - cron: "23 */3 * * *"
   workflow_dispatch: {}
 
 permissions:
@@ -15,7 +16,7 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
 
@@ -24,16 +25,19 @@ jobs:
           python-version: "3.12"
 
       - name: Install
-        run: pip install --quiet requests==2.32.3 beautifulsoup4==4.12.3
+        run: pip install --quiet beautifulsoup4==4.12.3
 
-      - name: Read the listings and update docs/bids.json
-        run: python scraper/update.py
+      - name: Read the alert emails and update docs/bids.json
+        env:
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: python scraper/mail.py
 
       - name: Save the new list
         run: |
           git config user.name "tender-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/bids.json docs/status.json data/seen.json
+          git add docs/bids.json docs/status.json data/mail_state.json
           if git diff --cached --quiet; then
             echo "Nothing changed."
           else
@@ -41,12 +45,3 @@ jobs:
             git pull --rebase --quiet || true
             git push
           fi
-
-      - name: Keep sample pages for fixing the reader
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: sample-pages
-          path: debug/
-          retention-days: 5
-          if-no-files-found: ignore
