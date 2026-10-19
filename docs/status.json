@@ -1,1 +1,15 @@
-{"last_run":"","last_success":"","ok":true,"problems":[]}
+{
+ "bids_in_file": 131,
+ "counts": {
+  "dropped_old": 0,
+  "listed": 0
+ },
+ "last_run": "2026-10-20T01:21:52+05:30",
+ "last_success": "",
+ "listing_pages": 0,
+ "ok": false,
+ "problems": [
+  "HTTP 403 (refused) at www.tender247.com"
+ ],
+ "requests": 1
+}
