@@ -36,7 +36,8 @@ NORMAL_DAYS = 5      # later runs look at recent mail only (re-reading is harmle
 KEEP_DAYS = 60
 MAX_MESSAGES = 400
 YEARS = " OR ".join('"GEM/%d"' % y for y in range(C.TODAY.year - 1, C.TODAY.year + 3))
-QUERY = "(from:gem.gov.in OR from:gov.in OR %s)" % YEARS
+# Only GeM mail and mail that carries a GeM bid number. Other government mail (OTPs, KYC) is never opened.
+QUERY = "(from:gem.gov.in OR from:helpdesk-gem@gov.in OR %s)" % YEARS
 
 LOCAL_WORDS = [
     "dhanbad", "bccl", "bharat coking", "mugma", "sindri", "jharia", "katras", "gomoh", "maithon", "panchet",
