@@ -6,6 +6,11 @@ GeM goods bids for Dhanbad district (BCCL, ECL Mugma, Railways, IIT (ISM), HURL 
 
 ## Kaise chalta hai
 
+**Roz do baar (subah ~7:50, shaam ~5:50):** Claude ka scheduled task Tender247, TenderShark aur Tenderlelo ke public pages padhta hai, Dhanbad ke GeM goods bids ki list banata hai, aur `scraper/merge_claude.py` se `docs/bids.json` mein jod deta hai. Ye Claude subscription rehne tak chalta hai.
+
+**Har 3 ghante (hamesha, free):** neeche wala email robot bhi chalta hai.
+
+
 1. GeM ke seller alert emails aur tender website ke alert emails ek Gmail mein aate hain.
 2. Har 3 ghante GitHub apne aap `scraper/mail.py` chalata hai. Wo us Gmail ko sirf padhta hai (kuch delete ya "read" mark nahi karta), aur jin emails mein GeM bid number (jaise `GEM/2026/B/8118772`) hai, unse bid ki details nikalta hai.
 3. Sirf wahi bids website pe dikhte hain jinme Dhanbad district ka naam ya pin code (826xxx / 828xxx) ho. Baaki `docs/bids.json` mein rehte hain, website pe chhupe rehte hain.
