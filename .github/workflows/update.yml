@@ -1,9 +1,8 @@
 name: Update Dhanbad bids
 
 on:
-  schedule:
-    # Times are UTC: 02:17, 07:17 and 13:17 UTC = 7:47 AM, 12:47 PM and 6:47 PM in India.
-    - cron: "17 2,7,13 * * *"
+  # Paused: Tender247 refuses GitHub's servers (HTTP 403) and Tenderlelo's terms do not allow
+  # automated crawlers, so this does not run on a timer. It can still be started by hand.
   workflow_dispatch: {}
 
 permissions:
