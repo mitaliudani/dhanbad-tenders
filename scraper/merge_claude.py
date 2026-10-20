@@ -18,15 +18,12 @@ import common as C  # noqa: E402
 BIDS_FILE = os.path.join(C.ROOT, "docs", "bids.json")
 
 
-def main(path):
-    with open(path, encoding="utf-8") as f:
-        incoming = [b for b in json.load(f).get("bids", []) if b.get("bid_no")]
-    if not incoming:
-        sys.exit("No bids in %s - nothing merged, site left as it was." % path)
-    data = C.load_json(BIDS_FILE, {"generated_at": "", "bids": []})
-    bids = {b["bid_no"]: b for b in data.get("bids", []) if b.get("bid_no")}
+def merge_docs(bids, incoming):
+    """Merge Claude-made bid documents into the bids map. Returns (added, updated)."""
     added = updated = 0
     for b in incoming:
+        if not isinstance(b, dict) or not C.BID_RE.fullmatch(str(b.get("bid_no", ""))):
+            continue
         old = bids.get(b["bid_no"])
         if not old:
             bids[b["bid_no"]] = b
@@ -40,6 +37,17 @@ def main(path):
         old["corrigendum"], old["corrigendum_note"] = corr, note if corr else ""
         old["local"] = True
         updated += 1
+    return added, updated
+
+
+def main(path):
+    with open(path, encoding="utf-8") as f:
+        incoming = [b for b in json.load(f).get("bids", []) if b.get("bid_no")]
+    if not incoming:
+        sys.exit("No bids in %s - nothing merged, site left as it was." % path)
+    data = C.load_json(BIDS_FILE, {"generated_at": "", "bids": []})
+    bids = {b["bid_no"]: b for b in data.get("bids", []) if b.get("bid_no")}
+    added, updated = merge_docs(bids, incoming)
     out = sorted(bids.values(), key=lambda x: (x.get("end_date") or "9999", x["bid_no"]))
     C.save_json(BIDS_FILE, {"generated_at": C.NOW.isoformat(timespec="seconds"), "bids": out})
     print("Merged: %d new, %d updated, %d bids in the site now." % (added, updated, len(out)))

@@ -14,6 +14,7 @@ import collections
 import datetime as dt
 import email
 import imaplib
+import json
 import os
 import re
 import sys
@@ -24,6 +25,7 @@ from bs4 import BeautifulSoup
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import common as C  # noqa: E402
+from merge_claude import merge_docs  # noqa: E402
 
 BIDS_FILE = os.path.join(C.ROOT, "docs", "bids.json")
 STATUS_FILE = os.path.join(C.ROOT, "docs", "status.json")
@@ -37,7 +39,8 @@ KEEP_DAYS = 60
 MAX_MESSAGES = 400
 YEARS = " OR ".join('"GEM/%d"' % y for y in range(C.TODAY.year - 1, C.TODAY.year + 3))
 # Only GeM mail and mail that carries a GeM bid number. Other government mail (OTPs, KYC) is never opened.
-QUERY = "(from:gem.gov.in OR from:helpdesk-gem@gov.in OR %s)" % YEARS
+DATA_SUBJECT = "Dhanbad bids data"   # emails the Claude refresh task sends to this same Gmail
+QUERY = '(from:gem.gov.in OR from:helpdesk-gem@gov.in OR %s OR subject:"%s")' % (YEARS, DATA_SUBJECT)
 
 LOCAL_WORDS = [
     "dhanbad", "bccl", "bharat coking", "mugma", "sindri", "jharia", "katras", "gomoh", "maithon", "panchet",
@@ -336,6 +339,21 @@ def merge(bids, hit, when, sender, stats):
         old["title"] = hit["title"]
 
 
+def read_data_email(text):
+    """Bid documents sent by the Claude task: one JSON object per line between BEGIN-BIDS and END-BIDS."""
+    m = re.search(r"BEGIN-BIDS\s*\n(.*?)\n\s*END-BIDS", text or "", re.S)
+    docs, bad = [], 0
+    for line in (m.group(1).splitlines() if m else []):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            docs.append(json.loads(line))
+        except ValueError:
+            bad += 1
+    return docs, bad
+
+
 def main():
     now = C.NOW.isoformat(timespec="seconds")
     data = C.load_json(BIDS_FILE, {"generated_at": "", "bids": []})
@@ -367,15 +385,31 @@ def main():
                 when = C.TODAY
             dated.append((when, m))
         dated.sort(key=lambda x: x[0])
+        done = state.get("data_emails", [])
         for when, m in dated:
             subject = header_text(m.get("Subject"))
-            sender = (parseaddr(header_text(m.get("From")))[1].split("@")[-1] or "email").lower()
+            from_addr = parseaddr(header_text(m.get("From")))[1].lower()
+            sender = (from_addr.split("@")[-1] or "email").lower()
             text, html = bodies(m)
             if not text and html:
                 text = html_text(html)
+            if subject.startswith(DATA_SUBJECT):
+                mid = (m.get("Message-ID") or subject).strip()
+                if from_addr != ADDRESS.lower() or mid in done:
+                    continue                      # only the owner's own data emails, each applied once
+                docs, bad = read_data_email(text)
+                added, updated = merge_docs(bids, docs)
+                stats["data_emails"] += 1
+                stats["new"] += added
+                stats["changed"] += updated
+                if bad:
+                    problems.append("%d line(s) in a Claude data email could not be read." % bad)
+                done.append(mid)
+                continue
             for hit in parse_message(subject, text, html):
                 stats["bids_in_emails"] += 1
                 merge(bids, hit, when, sender, stats)
+        state["data_emails"] = done[-60:]
         if ok:
             state["backfilled"] = True
             state["last_ok"] = now
