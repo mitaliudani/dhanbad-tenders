@@ -83,6 +83,9 @@ select{border:1px solid var(--line);background:var(--surface);border-radius:999p
 .acts .btn{font-size:12.5px;padding:5px 12px;min-height:32px}
 .empty{background:var(--surface);border:1px dashed var(--line);border-radius:var(--r);padding:24px 18px;text-align:center;color:var(--muted)}
 .note{font-size:13px;color:var(--muted);margin-top:18px}
+.setup{margin-top:10px;border:1px dashed var(--line);border-radius:8px;padding:8px 10px}
+.setup summary{cursor:pointer;font-weight:600;font-size:14px}
+.setup ol{margin:8px 0;padding-left:20px;font-size:14px;display:flex;flex-direction:column;gap:6px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:13px;z-index:20;max-width:calc(100% - 32px)}
 </style>
 </head>
@@ -99,9 +102,20 @@ select{border:1px solid var(--line);background:var(--surface);border-radius:999p
     <li><span class="n">1</span><div><b>GeM pe Dhanbad ki list kholiye</b>
       <p>"Search by Consignee Location" → State: Jharkhand → City: Dhanbad → "View all Bids".</p>
       <div class="row"><a class="btn primary" href="https://bidplus.gem.gov.in/advance-search" target="_blank" rel="noopener">GeM Advance Search kholiye</a></div></div></li>
-    <li><span class="n">2</span><div><b>List copy ya save kijiye</b>
+    <li><span class="n">2</span><div><b>Saare pages ek saath: "GeM Sab Pages" dabaiye</b>
+      <p>GeM ki Dhanbad list khuli ho tab Chrome ke address bar mein <b>GeM Sab</b> likhiye aur neeche aaye <b>☆ GeM Sab Pages</b> pe tap kijiye. Ye khud page 1 se 13 tak "Next" dabayega (jaise aap dabati hain, har page pe ~1.5 second) aur saare bids leke yahi Sort Machine khol dega. Pehli baar neeche ka ek-baar-ka-setup kar lijiye.</p>
+      <details class="setup"><summary>Ek baar ka setup (2 minute)</summary>
+        <ol>
+          <li><button class="btn primary" id="bmCopy" type="button" disabled>Code copy kijiye</button></li>
+          <li>Chrome ⋮ menu → <b>☆</b> dabaiye (ye page bookmark ho jaayega) → neeche <b>Edit</b> dabaiye.</li>
+          <li>Name mein likhiye: <b>GeM Sab Pages</b></li>
+          <li>URL wale box ka sab mitaa ke copy kiya hua code <b>paste</b> kijiye → ✓ / Save.</li>
+        </ol>
+        <textarea id="bmCode" readonly aria-label="Bookmark code" style="min-height:70px;font-family:var(--f-mono);font-size:11px"></textarea>
+      </details></div></li>
+    <li><span class="n">↺</span><div><b>Ya: list copy ya save kijiye</b>
       <p><b>Copy:</b> list pe ungli daba ke rakhiye → "Select all" → "Copy".<br><b>Save (PDF link bhi aayega):</b> Chrome ⋮ menu → ⬇ Download. File phone mein save ho jaayegi.<br>Har page (1, 2, 3…) alag-alag daal sakti hain, machine sab jodti jaayegi.</p></div></li>
-    <li><span class="n">3</span><div><b>Yahan daaliye</b>
+    <li><span class="n">3</span><div><b>Copy / save kiya ho to yahan daaliye</b>
       <textarea id="paste" placeholder="Yahan paste kijiye (copy ki hui GeM list)…" aria-label="Copied GeM list"></textarea>
       <div class="row">
         <button class="btn primary" id="sortBtn" type="button">Sort karo</button>
@@ -362,7 +376,37 @@ $("waBtn").addEventListener("click", function(){
   window.open("https://wa.me/?text=" + encodeURIComponent(t.slice(0, 3500)), "_blank", "noopener");
 });
 
-load(); render();
+/* Bids handed over by the "GeM Sab Pages" button (in the address after #gem=) */
+function fromHash(){
+  var h = location.hash || "";
+  if(h.indexOf("#gem=") !== 0) return;
+  try{
+    var b64 = h.slice(5).replace(/-/g, "+").replace(/_/g, "/");
+    while(b64.length % 4) b64 += "=";
+    var arr = JSON.parse(decodeURIComponent(escape(atob(b64))));
+    var list = arr.map(function(x){
+      var items = clean(x.items).replace(/\.\.\.$/, "…");
+      return {bid:String(x.bid||"").toUpperCase(), ra:x.ra||"", items:items || "(item ka naam nahi mila)", qty:String(x.qty||"").replace(/[^\d,]/g, ""),
+              dept:clean(x.dept), start:parseWhen(x.start), end:parseWhen(x.end), kind:SERVICE_RE.test(items) ? "services" : "goods",
+              pdf:/^https:\/\/[a-z.]*gem\.gov\.in\//i.test(x.pdf||"") ? x.pdf : "", seen:Date.now()};
+    }).filter(function(c){ return /^GEM\/\d{4}\/[BR]\/\d+$/.test(c.bid); });
+    add(list, "GeM ke saare pages");
+  }catch(e){ $("msg").className = "msg err"; $("msg").textContent = "GeM se aaye bids padh nahi paaye. Ek baar phir button dabaiye."; }
+  try{ history.replaceState(null, "", location.pathname + location.search); }catch(e){}
+}
+var BM = "";
+fetch("gemgrab.js", {cache:"no-store"}).then(function(r){ return r.ok ? r.text() : ""; }).then(function(code){
+  if(!code) return;
+  BM = "javascript:" + encodeURIComponent(code.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\n\s*/g, "\n"));
+  $("bmCode").value = BM; $("bmCopy").disabled = false;
+}).catch(function(){});
+$("bmCopy").addEventListener("click", function(){
+  var done = function(){ toast("Code copy ho gaya. Ab bookmark ka URL mein paste kijiye."); };
+  try{ navigator.clipboard.writeText(BM).then(done, function(){ $("bmCode").select(); document.execCommand("copy"); done(); }); }
+  catch(e){ $("bmCode").select(); try{ document.execCommand("copy"); done(); }catch(e2){ toast("Neeche ke box se code select karke copy kijiye"); } }
+});
+
+load(); fromHash(); render();
 window.__gemSort = {parseText: parseText, parseHtml: parseHtml, decodeMhtml: decodeMhtml};
 })();
 </script>
