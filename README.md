@@ -1,12 +1,14 @@
 # Dhanbad GeM Tenders
 
+**Sabse taaza bids:** `docs/sort.html` (GeM Sort Machine) – GeM pe Dhanbad ki list kholke hara button dabaiye.
+
 GeM goods bids for Dhanbad district (BCCL, ECL Mugma, Railways, IIT (ISM), HURL Sindri, DVC, DGMS, CIMFR and others), on one page that anyone can open.
 
 **Website:** https://mitaliudani.github.io/dhanbad-tenders/
 
 ## Kaise chalta hai
 
-**Roz do baar (subah ~7:50, shaam ~5:50):** Claude ka scheduled task Tender247, TenderShark aur Tenderlelo ke public pages padhta hai aur Dhanbad ke naye ya badle GeM goods bids "Dhanbad bids data" naam ke email mein isi Gmail pe bhejta hai (email apne aap archive ho jaata hai). Email robot use padh ke `docs/bids.json` mein jod deta hai. Ye Claude subscription rehne tak chalta hai.
+**(20 Oct 2026 tak, ab band):** Claude ka scheduled task Tender247, TenderShark aur Tenderlelo ke public pages padhta hai aur Dhanbad ke naye ya badle GeM goods bids "Dhanbad bids data" naam ke email mein isi Gmail pe bhejta hai (email apne aap archive ho jaata hai). Email robot use padh ke `docs/bids.json` mein jod deta hai. Ye Claude subscription rehne tak chalta hai.
 
 **Har 3 ghante (hamesha, free):** neeche wala email robot bhi chalta hai.
 
