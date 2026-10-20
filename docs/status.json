@@ -1,12 +1,15 @@
 {
  "bids_in_file": 131,
  "counts": {
+  "changed": 1,
+  "data_emails": 1,
   "dropped_old": 0,
-  "emails": 0
+  "emails": 1,
+  "new": 0
  },
  "dhanbad_bids": 131,
- "last_run": "2026-10-20T05:56:10+05:30",
- "last_success": "2026-10-20T05:56:10+05:30",
+ "last_run": "2026-10-20T12:27:27+05:30",
+ "last_success": "2026-10-20T12:27:27+05:30",
  "ok": true,
  "problems": [],
  "source": "email"
