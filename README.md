@@ -16,6 +16,10 @@ GeM goods bids for Dhanbad district (BCCL, ECL Mugma, Railways, IIT (ISM), HURL 
 3. Sirf wahi bids website pe dikhte hain jinme Dhanbad district ka naam ya pin code (826xxx / 828xxx) ho. Baaki `docs/bids.json` mein rehte hain, website pe chhupe rehte hain.
 4. Closing date badle ya email mein corrigendum likha ho, to bid pe **Corrigendum** lag jaata hai. 60 din se purane bids apne aap hat jaate hain.
 
+## Telegram alerts
+
+Har naye Dhanbad bid aur corrigendum ka message Telegram pe aata hai. Setup: @BotFather se bot banaiye, uska token `TELEGRAM_BOT_TOKEN` naam ke GitHub secret mein daaliye, phir jisko alert chahiye wo apne phone se us bot ko kholke **Start** dabaye (ek ghante ke andar welcome message aata hai). `/list` bhejne pe sabse pehle band hone wale 10 bids milte hain, `/stop` se alerts band.
+
 ## Ek baar ka setup
 
 1. Alert wale Gmail mein **2-Step Verification** on kijiye, phir https://myaccount.google.com/apppasswords pe ek **App password** banaiye (16 akshar).
