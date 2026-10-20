@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        GeM Sab Pages
 // @namespace   dhanbad-tenders
-// @version     1.1
+// @version     1.2
 // @description Saare pages ek saath Sort Machine mein
 // @include     https://bidplus.gem.gov.in/*
 // @match       https://bidplus.gem.gov.in/*
@@ -103,6 +103,11 @@ window.__GEMGRAB_BUTTON = true;
   function firstBid() { var r = readPage(); return r.length ? r[0].bid : ""; }
 
   var page = 0, pages = totalPages();
+  if (pages > 50) {
+    stop("Ye poore India ki list hai (" + pages + " pages). Pehle GeM Advance Search mein " +
+         "\"Search by Consignee Location\" → JHARKHAND → DHANBAD chuniye, phir ye button dabaiye.");
+    return;
+  }
   function step() {
     page++;
     var got = readPage();

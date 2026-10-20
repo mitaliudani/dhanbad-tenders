@@ -98,6 +98,11 @@
   function firstBid() { var r = readPage(); return r.length ? r[0].bid : ""; }
 
   var page = 0, pages = totalPages();
+  if (pages > 50) {
+    stop("Ye poore India ki list hai (" + pages + " pages). Pehle GeM Advance Search mein " +
+         "\"Search by Consignee Location\" → JHARKHAND → DHANBAD chuniye, phir ye button dabaiye.");
+    return;
+  }
   function step() {
     page++;
     var got = readPage();
