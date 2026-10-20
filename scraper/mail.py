@@ -420,6 +420,17 @@ def main():
     stats["dropped_old"] = before - len(bids)
     out = sorted(bids.values(), key=lambda b: (b.get("end_date") or "9999", b["bid_no"]))
     shown = sum(1 for b in out if b.get("local") is not False)
+    # Write (and so commit) only when something changed, the result flipped, or every 6 hours,
+    # so an hourly run does not fill the history with identical lists.
+    try:
+        last = dt.datetime.fromisoformat(old_status.get("last_run", ""))
+        due = (C.NOW - last) >= dt.timedelta(hours=6)
+    except ValueError:
+        due = True
+    changed = any(stats.get(k) for k in ("new", "changed", "dropped_old", "data_emails"))
+    if not (changed or due or ok != old_status.get("ok") or problems != old_status.get("problems")):
+        print("Nothing new; files left as they were.", dict(stats))
+        return
     C.save_json(BIDS_FILE, {"generated_at": now if ok else data.get("generated_at", ""), "bids": out})
     C.save_json(STATE_FILE, state)
     status = {

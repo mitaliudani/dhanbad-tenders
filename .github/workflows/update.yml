@@ -2,10 +2,9 @@ name: Update Dhanbad bids
 
 on:
   schedule:
-    # Every 3 hours, at 23 minutes past (UTC). GitHub may start it a few minutes late.
-    - cron: "23 */3 * * *"
-    # Also 8:37 AM and 6:37 PM India time, soon after the Claude refresh emails its data.
-    - cron: "7 3,13 * * *"
+    # Every hour at 23 minutes past. GitHub sometimes starts a run late or skips one,
+    # so hourly keeps the list fresh; a run that finds nothing new changes no files.
+    - cron: "23 * * * *"
   workflow_dispatch: {}
 
 permissions:
