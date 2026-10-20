@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        GeM Sab Pages
 // @namespace   dhanbad-tenders
-// @version     1.2
+// @version     1.3
 // @description Saare pages ek saath Sort Machine mein
 // @include     https://bidplus.gem.gov.in/*
 // @match       https://bidplus.gem.gov.in/*
@@ -144,10 +144,17 @@ window.__GEMGRAB_BUTTON = true;
 })();
 
 (function () {
-  var b = document.createElement("button");
-  b.textContent = "⬇ Saare pages → Sort Machine";
-  b.style.cssText = "position:fixed;right:10px;bottom:10px;z-index:2147483646;background:#0D6A70;color:#fff;border:0;" +
-    "border-radius:999px;padding:12px 16px;font:600 15px system-ui,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.3)";
-  b.addEventListener("click", function () { b.remove(); window.__gemGrabRun(); });
-  document.body.appendChild(b);
+  /* some browsers start user scripts before the page body exists, so wait for it */
+  function addButton() {
+    if (!document.body) { return setTimeout(addButton, 300); }
+    if (document.getElementById("gem-sab-pages-btn")) { return; }
+    var b = document.createElement("button");
+    b.id = "gem-sab-pages-btn";
+    b.textContent = "⬇ Saare pages → Sort Machine";
+    b.style.cssText = "position:fixed;right:12px;bottom:96px;z-index:2147483646;background:#1C7543;color:#fff;border:0;" +
+      "border-radius:999px;padding:14px 18px;font:700 16px system-ui,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.35)";
+    b.addEventListener("click", function () { b.remove(); window.__gemGrabRun(); });
+    document.body.appendChild(b);
+  }
+  if (document.readyState === "loading") { document.addEventListener("DOMContentLoaded", addButton); } else { addButton(); }
 })();
