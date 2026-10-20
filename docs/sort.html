@@ -112,6 +112,14 @@ select{border:1px solid var(--line);background:var(--surface);border-radius:999p
           <li>URL wale box ka sab mitaa ke copy kiya hua code <b>paste</b> kijiye → ✓ / Save.</li>
         </ol>
         <textarea id="bmCode" readonly aria-label="Bookmark code" style="min-height:70px;font-family:var(--f-mono);font-size:11px"></textarea>
+      </details>
+      <details class="setup"><summary>Chrome mein na chale to: Firefox wala button</summary>
+        <ol>
+          <li>Play Store se <b>Firefox</b> install kijiye aur kholiye.</li>
+          <li>Firefox ⋮ menu → <b>Add-ons</b> → <b>Tampermonkey</b> dhoondh ke <b>Add</b> kijiye.</li>
+          <li>Firefox mein ye link kholiye: <a href="gemgrab.user.js">gemgrab.user.js</a> → <b>Install</b> dabaiye.</li>
+          <li>Ab Firefox mein GeM ki Dhanbad list kholiye. Neeche daayein ek hara button aayega: <b>"⬇ Saare pages → Sort Machine"</b>. Use dabaiye.</li>
+        </ol>
       </details></div></li>
     <li><span class="n">↺</span><div><b>Ya: list copy ya save kijiye</b>
       <p><b>Copy:</b> list pe ungli daba ke rakhiye → "Select all" → "Copy".<br><b>Save (PDF link bhi aayega):</b> Chrome ⋮ menu → ⬇ Download. File phone mein save ho jaayegi.<br>Har page (1, 2, 3…) alag-alag daal sakti hain, machine sab jodti jaayegi.</p></div></li>
@@ -317,14 +325,15 @@ function buyerOf(b){
   return known || b.dept.split(/Ministry of [A-Za-z ]+?(?=[A-Z][a-z]+ [A-Z])/)[0].slice(0, 60) || "Buyer not stated";
 }
 function card(b){
-  var now = Date.now(), left = b.end == null ? null : Math.floor((b.end - now) / 86400000);
+  var now = Date.now(), left = null;
+  if(b.end != null){ var de = ist(b.end), dn = ist(now); left = Math.round((Date.UTC(de.getUTCFullYear(), de.getUTCMonth(), de.getUTCDate()) - Date.UTC(dn.getUTCFullYear(), dn.getUTCMonth(), dn.getUTCDate())) / 86400000); }
   var tone = b.end != null && b.end < now ? "closed" : (left != null && left <= 3 ? "soon" : "live");
   var d = b.end != null ? ist(b.end) : null;
   var date = d ? '<div class="m">' + MONS[d.getUTCMonth()] + '</div><div class="d">' + d.getUTCDate() + '</div><div class="t">' + fmt(b.end).split(", ")[1] + '</div>' : '<div class="d">?</div>';
   var acts = b.pdf ? '<a class="btn primary" href="' + esc(b.pdf) + '" target="_blank" rel="noopener">📄 Bid PDF (GeM)</a>' : '<a class="btn" href="https://bidplus.gem.gov.in/all-bids" target="_blank" rel="noopener">GeM pe kholo</a>';
   acts += '<button class="btn" type="button" data-copy="' + esc(b.bid) + '">Bid no. copy</button><button class="btn" type="button" data-del="' + esc(b.bid) + '">Hatao</button>';
   return '<article class="card" data-tone="' + tone + '"><div class="date">' + date + '</div><div class="body">'
-    + '<span class="pill ' + b.kind + '">' + (b.kind === "goods" ? "Goods" : "Services") + '</span>' + (tone === "closed" ? '<span class="pill closed">Band</span>' : (tone === "soon" ? '<span class="pill services">' + (left <= 0 ? "Aaj band" : left + " din bache") + '</span>' : ''))
+    + '<span class="pill ' + b.kind + '">' + (b.kind === "goods" ? "Goods" : "Services") + '</span>' + (tone === "closed" ? '<span class="pill closed">Band</span>' : (tone === "soon" ? '<span class="pill services">' + (left <= 0 ? "Aaj band" : (left === 1 ? "Kal band" : left + " din bache")) + '</span>' : ''))
     + '<div class="title">' + esc(b.items) + '</div>'
     + '<div class="meta"><span class="bidno">' + esc(b.bid) + '</span>' + (b.qty ? ' · Qty ' + esc(b.qty) : '') + '</div>'
     + (b.dept ? '<div class="meta">' + esc(b.dept) + '</div>' : '')

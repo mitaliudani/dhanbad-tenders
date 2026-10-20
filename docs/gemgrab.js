@@ -6,6 +6,9 @@
    itself and nothing is sent anywhere except to your own Sort Machine page. */
 (function () {
   "use strict";
+  if (window.__GEMGRAB_BUTTON) { window.__gemGrabRun = run; return; }
+  run();
+  function run() {
   if (window.__gemGrab) { return; }
   window.__gemGrab = true;
   var SORT = window.__GEMSORT_URL || "https://mitaliudani.github.io/dhanbad-tenders/sort.html";
@@ -127,4 +130,5 @@
 
   say("Shuru kar rahe hain…");
   setTimeout(step, 300);
+  }
 })();
