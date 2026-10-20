@@ -81,6 +81,11 @@ select{border:1px solid var(--line);background:var(--surface);border-radius:999p
 .bidno{font-family:var(--f-mono);font-size:12.5px;background:var(--sunk);border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--ink)}
 .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .acts .btn{font-size:12.5px;padding:5px 12px;min-height:32px}
+.spec{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+.spec dl{display:grid;grid-template-columns:minmax(96px,max-content) minmax(0,1fr);gap:5px 12px;margin:0;font-size:13.5px}
+.spec dt{color:var(--muted)}
+.spec dd{margin:0;overflow-wrap:anywhere}
+.spec .hint{font-size:12.5px;color:var(--muted);margin:10px 0 0}
 .empty{background:var(--surface);border:1px dashed var(--line);border-radius:var(--r);padding:24px 18px;text-align:center;color:var(--muted)}
 .note{font-size:13px;color:var(--muted);margin-top:18px}
 .setup{margin-top:10px;border:1px dashed var(--line);border-radius:8px;padding:8px 10px}
@@ -159,6 +164,7 @@ var SERVICE_RE = /custom bid for services|\bservic|pest (and animal )?control|\b
 var MON = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
 var MONS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 var bids = {};
+var openSpecs = {};
 var state = {goods:true, open:true, group:false, sort:"close", q:""};
 
 function $(id){ return document.getElementById(id); }
@@ -331,13 +337,24 @@ function card(b){
   var d = b.end != null ? ist(b.end) : null;
   var date = d ? '<div class="m">' + MONS[d.getUTCMonth()] + '</div><div class="d">' + d.getUTCDate() + '</div><div class="t">' + fmt(b.end).split(", ")[1] + '</div>' : '<div class="d">?</div>';
   var acts = b.pdf ? '<a class="btn primary" href="' + esc(b.pdf) + '" target="_blank" rel="noopener">📄 Bid PDF (GeM)</a>' : '<a class="btn" href="https://bidplus.gem.gov.in/all-bids" target="_blank" rel="noopener">GeM pe kholo</a>';
-  acts += '<button class="btn" type="button" data-copy="' + esc(b.bid) + '">Bid no. copy</button><button class="btn" type="button" data-del="' + esc(b.bid) + '">Hatao</button>';
+  var isOpen = !!openSpecs[b.bid];
+  acts += '<button class="btn" type="button" data-spec="' + esc(b.bid) + '" aria-expanded="' + isOpen + '">' + (isOpen ? "Details band karo" : "Specs / details") + '</button>'
+       + '<button class="btn" type="button" data-copy="' + esc(b.bid) + '">Bid no. copy</button>';
   return '<article class="card" data-tone="' + tone + '"><div class="date">' + date + '</div><div class="body">'
     + '<span class="pill ' + b.kind + '">' + (b.kind === "goods" ? "Goods" : "Services") + '</span>' + (tone === "closed" ? '<span class="pill closed">Band</span>' : (tone === "soon" ? '<span class="pill services">' + (left <= 0 ? "Aaj band" : (left === 1 ? "Kal band" : left + " din bache")) + '</span>' : ''))
     + '<div class="title">' + esc(b.items) + '</div>'
     + '<div class="meta"><span class="bidno">' + esc(b.bid) + '</span>' + (b.qty ? ' · Qty ' + esc(b.qty) : '') + '</div>'
     + (b.dept ? '<div class="meta">' + esc(b.dept) + '</div>' : '')
-    + '<div class="acts">' + acts + '</div></div></article>';
+    + '<div class="acts">' + acts + '</div>' + (isOpen ? specs(b, left, tone) : '') + '</div></article>';
+}
+function specs(b, left, tone){
+  var when = tone === "closed" ? "band ho chuki" : (left == null ? "" : (left <= 0 ? "aaj band hogi" : (left === 1 ? "kal band hogi" : left + " din bache")));
+  var rows = [["Bid number", b.bid], ["RA number", b.ra], ["Kya chahiye (items)", b.items], ["Kitna (quantity)", b.qty],
+              ["Goods ya services", b.kind === "goods" ? "Goods (saaman)" : "Services (seva)"], ["Kharidne wala / vibhag", b.dept],
+              ["Bid shuru hui", fmt(b.start)], ["Bid band hogi", fmt(b.end) + (when ? " (" + when + ")" : "")]];
+  var html = rows.filter(function(r){ return r[1]; }).map(function(r){ return '<dt>' + r[0] + '</dt><dd>' + esc(r[1]) + '</dd>'; }).join("");
+  html += '<dt>Bid PDF</dt><dd>' + (b.pdf ? '<a href="' + esc(b.pdf) + '" target="_blank" rel="noopener">GeM pe bid ki PDF kholiye</a>' : 'List mein PDF link nahi tha. Bid number GeM pe search kijiye.') + '</dd>';
+  return '<div class="spec"><dl>' + html + '</dl><p class="hint">Item ki technical specification, EMD, delivery ke din, eligibility aur baaki sharten GeM ki bid PDF ke andar likhi hoti hain. Bid lagane se pehle PDF zaroor padhiye.</p></div>';
 }
 function render(){
   var arr = shown(), total = Object.keys(bids).length;
@@ -354,9 +371,9 @@ document.querySelectorAll(".chip").forEach(function(c){ c.addEventListener("clic
 $("sort").addEventListener("change", function(e){ state.sort = e.target.value; render(); });
 var tq; $("q").addEventListener("input", function(e){ clearTimeout(tq); tq = setTimeout(function(){ state.q = e.target.value; render(); }, 120); });
 $("list").addEventListener("click", function(e){
-  var c = e.target.closest("[data-copy]"), d = e.target.closest("[data-del]");
+  var c = e.target.closest("[data-copy]"), sp = e.target.closest("[data-spec]");
   if(c){ var v = c.getAttribute("data-copy"); try{ navigator.clipboard.writeText(v).then(function(){ toast("Copied " + v); }, function(){ toast(v); }); }catch(err){ toast(v); } }
-  if(d){ delete bids[d.getAttribute("data-del")]; save(); render(); toast("Hata diya"); }
+  if(sp){ var id = sp.getAttribute("data-spec"); openSpecs[id] = !openSpecs[id]; render(); }
 });
 $("clearBtn").addEventListener("click", function(){ if(!Object.keys(bids).length) return; if(confirm("Saare saved bids hata dein?")){ bids = {}; save(); render(); $("msg").textContent = ""; } });
 
