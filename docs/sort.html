@@ -133,7 +133,7 @@ select{border:1px solid var(--line);background:var(--surface);border-radius:999p
 "use strict";
 var KEY = "gem-sort-v1";
 var BID_RE = /GEM\/\d{4}\/[BR]\/\d{5,9}/gi;
-var SERVICE_RE = /custom bid for services|\bservices?\b|\bhiring\b|\bhire\b|manpower|outsourc|repair(ing)? and maintenance|annual maintenance|\bamc\b|\bcmc\b|operation and maintenance|\bo ?& ?m\b|housekeeping|cleaning service|security service|catering|consultan|survey|transportation|handling|facility management|insurance/i;
+var SERVICE_RE = /custom bid for services|\bservic|pest (and animal )?control|\bhiring\b|\bhire\b|manpower|outsourc|repair(ing)? and maintenance|annual maintenance|\bamc\b|\bcmc\b|operation and maintenance|\bo ?& ?m\b|housekeeping|cleaning service|security service|catering|consultan|survey|transportation|handling|facility management|insurance/i;
 var MON = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
 var MONS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 var bids = {};
