@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Sorts a GeM bid list you copied or saved from GeM: goods only, by closing date, with Excel export.">
+<title>GeM Sort Machine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#F2F5F4; --surface:#FFFFFF; --sunk:#E9EEED; --ink:#16201E; --muted:#56635F; --line:#D5DDDB;
+  --accent:#0D6A70; --accent-ink:#FFFFFF; --accent-soft:#DBECEC;
+  --live:#1C7543; --live-soft:#DCF0E3; --soon:#AD4F06; --soon-soft:#FAE7D4;
+  --closed:#68726F; --closed-soft:#E5EAE9; --danger:#B3261E;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1413; --surface:#161F1E; --sunk:#111918; --ink:#E4ECEA; --muted:#98A7A3; --line:#273331;
+  --accent:#53B8BD; --accent-ink:#0A1212; --accent-soft:#163A3C;
+  --live:#62CB8E; --live-soft:#163024; --soon:#F0A35E; --soon-soft:#3A2614;
+  --closed:#909D9A; --closed-soft:#202A28; --danger:#F2857D; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0E1413; --surface:#161F1E; --sunk:#111918; --ink:#E4ECEA; --muted:#98A7A3; --line:#273331;
+  --accent:#53B8BD; --accent-ink:#0A1212; --accent-soft:#163A3C;
+  --live:#62CB8E; --live-soft:#163024; --soon:#F0A35E; --soon-soft:#3A2614;
+  --closed:#909D9A; --closed-soft:#202A28; --danger:#F2857D; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;-webkit-text-size-adjust:100%}
+.wrap{max-width:860px;margin:0 auto;padding:0 max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px))}
+a{color:var(--accent)}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+header{padding-block:22px 6px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(34px,7vw,46px);line-height:1;margin:6px 0 8px}
+.lede{margin:0;color:var(--muted);max-width:62ch}
+.back{font-size:13px}
+.steps{margin:16px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.steps li{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px}
+.steps .n{font-family:var(--f-display);font-weight:700;font-size:24px;line-height:1;color:var(--accent)}
+.steps b{display:block}
+.steps p{margin:2px 0 0;font-size:14px;color:var(--muted)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;color:var(--ink);min-height:38px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn[disabled]{opacity:.5;cursor:default}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+textarea{width:100%;min-height:120px;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:10px 12px;margin-top:8px;resize:vertical;font-size:14px}
+.file{display:inline-flex}
+.file input{position:absolute;width:1px;height:1px;opacity:0}
+.msg{margin:10px 0 0;font-size:14px}
+.msg.ok{color:var(--live)} .msg.err{color:var(--danger)}
+.bar{position:sticky;top:0;z-index:5;background:var(--bg);padding-block:12px 10px;margin-top:18px;border-bottom:1px solid var(--line)}
+.bar input[type=search]{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:10px 12px;min-height:44px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-top:10px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+select{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 10px;font-size:13px;flex:none;max-width:220px}
+.count{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--muted);padding-top:10px}
+.list{display:flex;flex-direction:column;gap:10px;padding-top:10px}
+.group{font-family:var(--f-display);font-size:22px;font-weight:700;margin:12px 0 0}
+.card{display:grid;grid-template-columns:62px minmax(0,1fr);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.date{display:flex;flex-direction:column;align-items:center;padding:12px 4px;border-right:1px dashed var(--line);background:var(--sunk);text-align:center}
+.date .d{font-family:var(--f-display);font-weight:700;font-size:28px;line-height:1}
+.date .m{font-family:var(--f-mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+.date .t{font-family:var(--f-mono);font-size:11px;color:var(--muted);margin-top:4px}
+.card[data-tone="live"] .d{color:var(--live)} .card[data-tone="soon"] .d{color:var(--soon)} .card[data-tone="closed"] .d{color:var(--closed)}
+.body{padding:12px 14px;min-width:0}
+.pill{font-size:11.5px;font-weight:600;border-radius:999px;padding:2px 9px;margin-right:6px}
+.pill.goods{background:var(--live-soft);color:var(--live)} .pill.services{background:var(--soon-soft);color:var(--soon)}
+.pill.closed{background:var(--closed-soft);color:var(--closed)}
+.title{font-size:15.5px;font-weight:600;line-height:1.35;margin:6px 0 4px;overflow-wrap:anywhere}
+.meta{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.bidno{font-family:var(--f-mono);font-size:12.5px;background:var(--sunk);border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--ink)}
+.acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.acts .btn{font-size:12.5px;padding:5px 12px;min-height:32px}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:var(--r);padding:24px 18px;text-align:center;color:var(--muted)}
+.note{font-size:13px;color:var(--muted);margin-top:18px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:13px;z-index:20;max-width:calc(100% - 32px)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="back" href="./">← Dhanbad GeM Tenders</a>
+    <div class="eyebrow" style="margin-top:10px">Seedha GeM se · aapke phone pe</div>
+    <h1>GeM Sort Machine</h1>
+    <p class="lede">GeM ki Dhanbad wali bid list yahan daaliye. Machine sirf goods bids rakhegi, closing date ke hisaab se lagayegi, aur Excel bana degi. Ye sab aapke phone ke andar hi hota hai; koi bot GeM ko nahi kholta.</p>
+  </header>
+
+  <ol class="steps">
+    <li><span class="n">1</span><div><b>GeM pe Dhanbad ki list kholiye</b>
+      <p>"Search by Consignee Location" → State: Jharkhand → City: Dhanbad → "View all Bids".</p>
+      <div class="row"><a class="btn primary" href="https://bidplus.gem.gov.in/advance-search" target="_blank" rel="noopener">GeM Advance Search kholiye</a></div></div></li>
+    <li><span class="n">2</span><div><b>List copy ya save kijiye</b>
+      <p><b>Copy:</b> list pe ungli daba ke rakhiye → "Select all" → "Copy".<br><b>Save (PDF link bhi aayega):</b> Chrome ⋮ menu → ⬇ Download. File phone mein save ho jaayegi.<br>Har page (1, 2, 3…) alag-alag daal sakti hain, machine sab jodti jaayegi.</p></div></li>
+    <li><span class="n">3</span><div><b>Yahan daaliye</b>
+      <textarea id="paste" placeholder="Yahan paste kijiye (copy ki hui GeM list)…" aria-label="Copied GeM list"></textarea>
+      <div class="row">
+        <button class="btn primary" id="sortBtn" type="button">Sort karo</button>
+        <label class="btn file">Saved page chuniye<input id="file" type="file" accept=".html,.htm,.mhtml,.mht,.txt,text/html,multipart/related,message/rfc822" multiple></label>
+      </div>
+      <p class="msg" id="msg" role="status"></p></div></li>
+  </ol>
+
+  <div class="bar">
+    <input id="q" type="search" placeholder="Item, buyer ya bid number se dhoondhiye…" aria-label="Search">
+    <div class="chips" role="group" aria-label="Filters">
+      <button class="chip" type="button" data-f="goods" aria-pressed="true">Sirf goods</button>
+      <button class="chip" type="button" data-f="open" aria-pressed="true">Sirf open</button>
+      <button class="chip" type="button" data-f="group" aria-pressed="false">Buyer ke hisaab se</button>
+      <select id="sort" aria-label="Sort">
+        <option value="close">Jaldi band hone wale pehle</option>
+        <option value="new">Naye pehle</option>
+      </select>
+    </div>
+    <div class="count"><span id="count">Abhi koi bid nahi daali</span>
+      <span class="row" style="margin:0"><button class="btn" id="xlsBtn" type="button" disabled>⬇ Excel</button><button class="btn" id="waBtn" type="button" disabled>WhatsApp</button><button class="btn" id="clearBtn" type="button">Sab hatao</button></span></div>
+  </div>
+  <main class="list" id="list"></main>
+  <p class="note">Goods ya services ka faisla bid ke naam se hota hai ("Custom Bid for Services", hiring, manpower, AMC jaise shabd services maane jaate hain). Bid lagane se pehle hamesha GeM pe asli PDF padhiye. Ye list sirf isi phone mein save hoti hai.</p>
+</div>
+<div class="toast" id="toast" hidden></div>
+<script>
+(function(){
+"use strict";
+var KEY = "gem-sort-v1";
+var BID_RE = /GEM\/\d{4}\/[BR]\/\d{5,9}/gi;
+var SERVICE_RE = /custom bid for services|\bservices?\b|\bhiring\b|\bhire\b|manpower|outsourc|repair(ing)? and maintenance|annual maintenance|\bamc\b|\bcmc\b|operation and maintenance|\bo ?& ?m\b|housekeeping|cleaning service|security service|catering|consultan|survey|transportation|handling|facility management|insurance/i;
+var MON = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+var MONS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+var bids = {};
+var state = {goods:true, open:true, group:false, sort:"close", q:""};
+
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+function clean(s){ return String(s || "").replace(/\s+/g, " ").trim(); }
+function load(){ try{ var s = JSON.parse(localStorage.getItem(KEY) || "{}"); if(s && s.bids) bids = s.bids; }catch(e){} }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify({bids:bids})); }catch(e){} }
+var tt;
+function toast(m){ var t = $("toast"); t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(function(){ t.hidden = true; }, 2400); }
+
+/* dates: "26-10-2026 5:00 PM", "26/10/2026 17:00", "26 Oct 2026, 5:00 pm" → epoch ms (India time) */
+function parseWhen(s){
+  s = clean(s);
+  var m = s.match(/(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})(?:[ ,T]+(\d{1,2}):(\d{2})(?::\d{2})?\s*([AaPp][Mm])?)?/);
+  var d, mo, y, h = 23, mi = 59;
+  if(m){ d = +m[1]; mo = +m[2] - 1; y = +m[3]; if(m[4]){ h = +m[4]; mi = +m[5]; if(m[6]){ var ap = m[6].toLowerCase(); if(ap === "pm" && h < 12) h += 12; if(ap === "am" && h === 12) h = 0; } } }
+  else {
+    m = s.match(/(\d{1,2})\s+([A-Za-z]{3,9})[,\s]+(\d{4})(?:[ ,]+(\d{1,2}):(\d{2})\s*([AaPp][Mm])?)?/);
+    if(!m || MON[m[2].slice(0,3).toLowerCase()] == null) return null;
+    d = +m[1]; mo = MON[m[2].slice(0,3).toLowerCase()]; y = +m[3];
+    if(m[4]){ h = +m[4]; mi = +m[5]; if(m[6]){ var ap2 = m[6].toLowerCase(); if(ap2 === "pm" && h < 12) h += 12; if(ap2 === "am" && h === 12) h = 0; } }
+  }
+  return Date.UTC(y, mo, d, h, mi) - 5.5 * 3600000;
+}
+function ist(ms){ return new Date(ms + 5.5 * 3600000); }
+function fmt(ms){ if(ms == null) return ""; var d = ist(ms); var h = d.getUTCHours(), m = d.getUTCMinutes(); return d.getUTCDate() + " " + MONS[d.getUTCMonth()] + " " + d.getUTCFullYear() + ", " + ((h % 12) || 12) + ":" + (m < 10 ? "0" : "") + m + (h < 12 ? " AM" : " PM"); }
+
+function after(text, labels, stops){
+  var re = new RegExp("(?:" + labels + ")\\s*:?\\s*([\\s\\S]*?)(?=(?:" + stops + ")\\s*:|$)", "i");
+  var m = text.match(re);
+  return m ? clean(m[1]) : "";
+}
+
+/* One GeM card's text → bid */
+function parseCard(t, pdf, full){
+  var nums = (t.match(BID_RE) || []).map(function(x){ return x.toUpperCase(); });
+  var bid = nums.filter(function(x){ return /\/B\//.test(x); })[0] || nums[0];
+  if(!bid) return null;
+  var ra = nums.filter(function(x){ return /\/R\//.test(x); })[0] || "";
+  var STOPS = "BID NO|RA NO|Items?|Quantity|Department Name And Address|Department|Start Date|End Date|Bid End Date|Bid Start Date";
+  var items = full || after(t, "Items?", STOPS);
+  var qty = after(t, "Quantity", STOPS).replace(/[^\d,]/g, "");
+  var dept = after(t, "Department Name And Address|Department", STOPS);
+  var start = parseWhen(after(t, "Bid Start Date|Start Date", STOPS));
+  var end = parseWhen(after(t, "Bid End Date|End Date", STOPS));
+  items = items.replace(BID_RE, "").replace(/\.\.\.$/, "…");
+  return {bid:bid, ra:ra, items:items || "(item ka naam nahi mila)", qty:qty, dept:dept, start:start, end:end,
+          kind: SERVICE_RE.test(items) ? "services" : "goods", pdf:pdf || "", seen:Date.now()};
+}
+
+/* Text → cards: split before every "BID NO", or else before every B-type bid number */
+function parseText(text, links, fulls){
+  text = String(text || "").replace(/\r/g, "");
+  var parts = text.split(/(?=BID\s*NO\s*[:.]?)/i).filter(function(p){ return /GEM\/\d{4}\/[BR]\/\d+/i.test(p); });
+  if(parts.length < 2){
+    var idx = [], m, re = /GEM\/\d{4}\/B\/\d{5,9}/gi, seen = {};
+    while((m = re.exec(text))){ var k = m[0].toUpperCase(); if(!seen[k]){ seen[k] = 1; idx.push(m.index); } }
+    if(idx.length > 1){ parts = idx.map(function(s, i){ return text.slice(Math.max(0, s - 0), idx[i + 1] || text.length); }); }
+  }
+  var out = [];
+  parts.forEach(function(p){
+    var b0 = (p.match(/GEM\/\d{4}\/B\/\d{5,9}/i) || p.match(BID_RE) || [""])[0].toUpperCase();
+    var c = parseCard(p, links && links[b0], fulls && fulls[b0]);
+    if(c) out.push(c);
+  });
+  return out;
+}
+
+/* Saved page (.html or Chrome's .mhtml) → text with line breaks, PDF links and full item names */
+function decodeMhtml(raw){
+  var b = raw.match(/boundary="?([^";\r\n]+)"?/i);
+  if(!b) return raw;
+  var parts = raw.split("--" + b[1]);
+  for(var i = 0; i < parts.length; i++){
+    var p = parts[i];
+    if(!/Content-Type:\s*text\/html/i.test(p)) continue;
+    var body = p.split(/\r?\n\r?\n/).slice(1).join("\n\n");
+    if(/Content-Transfer-Encoding:\s*quoted-printable/i.test(p)){
+      body = body.replace(/=\r?\n/g, "");
+      var bytes = [];
+      for(var j = 0; j < body.length; j++){
+        if(body[j] === "=" && /^[0-9A-F]{2}$/i.test(body.substr(j + 1, 2))){ bytes.push(parseInt(body.substr(j + 1, 2), 16)); j += 2; }
+        else { var cc = body.charCodeAt(j); if(cc < 128) bytes.push(cc); else { var enc = unescape(encodeURIComponent(body[j])); for(var q = 0; q < enc.length; q++) bytes.push(enc.charCodeAt(q)); } }
+      }
+      try{ return new TextDecoder("utf-8").decode(new Uint8Array(bytes)); }catch(e){ return body; }
+    }
+    if(/Content-Transfer-Encoding:\s*base64/i.test(p)){ try{ return new TextDecoder("utf-8").decode(Uint8Array.from(atob(body.replace(/\s+/g, "")), function(c){ return c.charCodeAt(0); })); }catch(e){} }
+    return body;
+  }
+  return raw;
+}
+function parseHtml(html){
+  var doc = new DOMParser().parseFromString(html, "text/html");
+  doc.querySelectorAll("script,style,noscript").forEach(function(n){ n.remove(); });
+  var links = {}, fulls = {};
+  doc.querySelectorAll("a[href]").forEach(function(a){
+    var t = (a.textContent.match(/GEM\/\d{4}\/[BR]\/\d{5,9}/i) || [""])[0].toUpperCase();
+    var href = a.getAttribute("href") || "";
+    if(t && /showbidDocument|showradocumentPdf/i.test(href)) links[t] = new URL(href, "https://bidplus.gem.gov.in/").href;
+  });
+  doc.querySelectorAll("[data-content]").forEach(function(el){
+    var card = el.closest("div.card, div.border, li, article, .bid_no, .block_header") || el.parentElement;
+    var bid = card ? (card.textContent.match(/GEM\/\d{4}\/B\/\d{5,9}/i) || [""])[0].toUpperCase() : "";
+    var v = clean(el.getAttribute("data-content"));
+    if(bid && v && v.length > (fulls[bid] || "").length) fulls[bid] = v;
+  });
+  doc.querySelectorAll("br").forEach(function(n){ n.replaceWith("\n"); });
+  doc.querySelectorAll("div,p,li,tr,h1,h2,h3,h4,h5,h6,section,article,span.bid_no,strong").forEach(function(n){ n.append("\n"); });
+  return parseText(doc.body ? doc.body.textContent : "", links, fulls);
+}
+
+function add(list, label){
+  var nNew = 0, nUp = 0;
+  list.forEach(function(c){
+    var o = bids[c.bid];
+    if(!o){ bids[c.bid] = c; nNew++; return; }
+    ["items","qty","dept","start","end","pdf","ra"].forEach(function(k){ if(c[k] && (!o[k] || (k === "items" && c[k].length > o[k].length) || k === "end")) o[k] = c[k]; });
+    o.kind = SERVICE_RE.test(o.items) ? "services" : "goods"; nUp++;
+  });
+  save(); render();
+  var m = $("msg");
+  if(!list.length){ m.className = "msg err"; m.textContent = "Isme koi GeM bid number (GEM/2026/B/…) nahi mila. GeM ki bid list hi copy ya save kijiye."; return; }
+  var g = list.filter(function(c){ return c.kind === "goods"; }).length;
+  m.className = "msg ok"; m.textContent = (label ? label + ": " : "") + list.length + " bids mile (" + g + " goods). " + nNew + " naye jude, " + nUp + " pehle se the.";
+}
+
+$("sortBtn").addEventListener("click", function(){
+  var t = $("paste").value;
+  if(!t.trim()){ $("msg").className = "msg err"; $("msg").textContent = "Pehle GeM ki list yahan paste kijiye."; return; }
+  add(/<\w+[\s>]/.test(t) ? parseHtml(t) : parseText(t));
+  $("paste").value = "";
+});
+$("file").addEventListener("change", function(e){
+  Array.prototype.forEach.call(e.target.files || [], function(f){
+    var r = new FileReader();
+    r.onload = function(){
+      var raw = String(r.result || "");
+      var html = /^MIME-Version|multipart\/related/i.test(raw.slice(0, 3000)) ? decodeMhtml(raw) : raw;
+      add(/<\w+[\s>]/.test(html) ? parseHtml(html) : parseText(html), f.name);
+    };
+    r.readAsText(f);
+  });
+  e.target.value = "";
+});
+
+/* list */
+function shown(){
+  var now = Date.now(), q = state.q.toLowerCase().split(/\s+/).filter(Boolean);
+  var arr = Object.keys(bids).map(function(k){ return bids[k]; }).filter(function(b){
+    if(state.goods && b.kind !== "goods") return false;
+    if(state.open && b.end != null && b.end < now) return false;
+    if(q.length){ var h = (b.items + " " + b.dept + " " + b.bid).toLowerCase(); for(var i = 0; i < q.length; i++) if(h.indexOf(q[i]) < 0) return false; }
+    return true;
+  });
+  arr.sort(function(a, b){
+    if(state.sort === "new") return (b.start || 0) - (a.start || 0);
+    return (a.end == null ? 9e15 : a.end) - (b.end == null ? 9e15 : b.end);
+  });
+  return arr;
+}
+function buyerOf(b){
+  var parts = clean(b.dept).split(/\s{2,}|\n/).filter(Boolean);
+  var known = (b.dept.match(/Bharat Coking Coal|Eastern Coalfields|Central Mine Planning|East Central Railway|Damodar Valley|Hindustan Urvarak|Indian Institute of Technology|Indian School of Mines|Mines Safety|Central Institute of Mining|Steel Authority/i) || [""])[0];
+  return known || b.dept.split(/Ministry of [A-Za-z ]+?(?=[A-Z][a-z]+ [A-Z])/)[0].slice(0, 60) || "Buyer not stated";
+}
+function card(b){
+  var now = Date.now(), left = b.end == null ? null : Math.floor((b.end - now) / 86400000);
+  var tone = b.end != null && b.end < now ? "closed" : (left != null && left <= 3 ? "soon" : "live");
+  var d = b.end != null ? ist(b.end) : null;
+  var date = d ? '<div class="m">' + MONS[d.getUTCMonth()] + '</div><div class="d">' + d.getUTCDate() + '</div><div class="t">' + fmt(b.end).split(", ")[1] + '</div>' : '<div class="d">?</div>';
+  var acts = b.pdf ? '<a class="btn primary" href="' + esc(b.pdf) + '" target="_blank" rel="noopener">📄 Bid PDF (GeM)</a>' : '<a class="btn" href="https://bidplus.gem.gov.in/all-bids" target="_blank" rel="noopener">GeM pe kholo</a>';
+  acts += '<button class="btn" type="button" data-copy="' + esc(b.bid) + '">Bid no. copy</button><button class="btn" type="button" data-del="' + esc(b.bid) + '">Hatao</button>';
+  return '<article class="card" data-tone="' + tone + '"><div class="date">' + date + '</div><div class="body">'
+    + '<span class="pill ' + b.kind + '">' + (b.kind === "goods" ? "Goods" : "Services") + '</span>' + (tone === "closed" ? '<span class="pill closed">Band</span>' : (tone === "soon" ? '<span class="pill services">' + (left <= 0 ? "Aaj band" : left + " din bache") + '</span>' : ''))
+    + '<div class="title">' + esc(b.items) + '</div>'
+    + '<div class="meta"><span class="bidno">' + esc(b.bid) + '</span>' + (b.qty ? ' · Qty ' + esc(b.qty) : '') + '</div>'
+    + (b.dept ? '<div class="meta">' + esc(b.dept) + '</div>' : '')
+    + '<div class="acts">' + acts + '</div></div></article>';
+}
+function render(){
+  var arr = shown(), total = Object.keys(bids).length;
+  $("count").textContent = total ? arr.length + " dikh rahe hain · kul " + total + " save" : "Abhi koi bid nahi daali";
+  $("xlsBtn").disabled = $("waBtn").disabled = !arr.length;
+  if(!total){ $("list").innerHTML = '<div class="empty">Upar ke 3 step kijiye. GeM ki Dhanbad list daalte hi yahan sorted list aa jaayegi.</div>'; return; }
+  if(!arr.length){ $("list").innerHTML = '<div class="empty">In filters mein koi bid nahi. "Sirf open" ya "Sirf goods" hata ke dekhiye.</div>'; return; }
+  if(state.group){
+    var g = {}; arr.forEach(function(b){ var k = buyerOf(b); (g[k] = g[k] || []).push(b); });
+    $("list").innerHTML = Object.keys(g).sort(function(a, b){ return g[b].length - g[a].length; }).map(function(k){ return '<h2 class="group">' + esc(k) + ' (' + g[k].length + ')</h2>' + g[k].map(card).join(""); }).join("");
+  } else $("list").innerHTML = arr.map(card).join("");
+}
+document.querySelectorAll(".chip").forEach(function(c){ c.addEventListener("click", function(){ var f = c.getAttribute("data-f"); state[f] = !state[f]; c.setAttribute("aria-pressed", String(state[f])); render(); }); });
+$("sort").addEventListener("change", function(e){ state.sort = e.target.value; render(); });
+var tq; $("q").addEventListener("input", function(e){ clearTimeout(tq); tq = setTimeout(function(){ state.q = e.target.value; render(); }, 120); });
+$("list").addEventListener("click", function(e){
+  var c = e.target.closest("[data-copy]"), d = e.target.closest("[data-del]");
+  if(c){ var v = c.getAttribute("data-copy"); try{ navigator.clipboard.writeText(v).then(function(){ toast("Copied " + v); }, function(){ toast(v); }); }catch(err){ toast(v); } }
+  if(d){ delete bids[d.getAttribute("data-del")]; save(); render(); toast("Hata diya"); }
+});
+$("clearBtn").addEventListener("click", function(){ if(!Object.keys(bids).length) return; if(confirm("Saare saved bids hata dein?")){ bids = {}; save(); render(); $("msg").textContent = ""; } });
+
+/* Excel and WhatsApp */
+function loadXlsx(cb){
+  if(window.XLSX) return cb();
+  var s = document.createElement("script");
+  s.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+  s.onload = cb; s.onerror = function(){ toast("Excel banane ke liye internet chahiye"); };
+  document.head.appendChild(s);
+}
+$("xlsBtn").addEventListener("click", function(){
+  var arr = shown();
+  loadXlsx(function(){
+    var rows = arr.map(function(b){ return {"Closing": fmt(b.end), "Bid number": b.bid, "Items": b.items, "Quantity": b.qty, "Buyer / department": b.dept, "Goods / services": b.kind, "Published": fmt(b.start), "Bid PDF (GeM)": b.pdf || ""}; });
+    var ws = XLSX.utils.json_to_sheet(rows);
+    ws["!cols"] = [{wch:22},{wch:22},{wch:60},{wch:9},{wch:50},{wch:10},{wch:22},{wch:48}];
+    var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Dhanbad GeM bids");
+    var d = ist(Date.now());
+    XLSX.writeFile(wb, "Dhanbad-GeM-bids-" + d.getUTCFullYear() + "-" + (d.getUTCMonth() + 1) + "-" + d.getUTCDate() + ".xlsx");
+  });
+});
+$("waBtn").addEventListener("click", function(){
+  var arr = shown().slice(0, 30);
+  var t = "Dhanbad GeM goods bids (" + arr.length + "):\n" + arr.map(function(b){ return "• " + fmt(b.end) + " – " + b.items.slice(0, 80) + " – " + b.bid + (b.pdf ? "\n  " + b.pdf : ""); }).join("\n");
+  window.open("https://wa.me/?text=" + encodeURIComponent(t.slice(0, 3500)), "_blank", "noopener");
+});
+
+load(); render();
+window.__gemSort = {parseText: parseText, parseHtml: parseHtml, decodeMhtml: decodeMhtml};
+})();
+</script>
+</body>
+</html>
