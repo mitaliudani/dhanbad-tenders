@@ -18,7 +18,7 @@ GeM goods bids for Dhanbad district (BCCL, ECL Mugma, Railways, IIT (ISM), HURL 
 
 ## Telegram alerts
 
-Har naye Dhanbad bid aur corrigendum ka message Telegram pe aata hai. Setup: @BotFather se bot banaiye, uska token `TELEGRAM_BOT_TOKEN` naam ke GitHub secret mein daaliye, phir jisko alert chahiye wo apne phone se us bot ko kholke **Start** dabaye (ek ghante ke andar welcome message aata hai). `/list` bhejne pe sabse pehle band hone wale 10 bids milte hain, `/stop` se alerts band.
+Har naye Dhanbad bid aur corrigendum ka message Telegram pe aata hai. Setup: @BotFather se bot banaiye, uska token `TELEGRAM_BOT_TOKEN` naam ke GitHub secret mein daaliye, phir jisko alert chahiye wo apne phone se us bot ko kholke **Start** dabaye (ek ghante ke andar welcome message aata hai). `/check` bhejne pe bot (10 minute ke andar) Tenderlelo ka public Dhanbad page ek baar kholta hai aur abhi ke GeM goods bids bhej deta hai; ye Claude ke bina bhi chalta hai. `/list` website ke 10 sabse jaldi band hone wale bids deta hai, `/stop` se alerts band.
 
 ## Ek baar ka setup
 

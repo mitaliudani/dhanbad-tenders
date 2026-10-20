@@ -15,6 +15,7 @@ import sys
 import time
 import urllib.parse
 import urllib.request
+import urllib.robotparser
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import common as C  # noqa: E402
@@ -25,6 +26,63 @@ BIDS_FILE = os.path.join(C.ROOT, "docs", "bids.json")
 CHATS_FILE = os.path.join(C.ROOT, "data", "telegram_chats.json")
 SENT_FILE = os.path.join(C.ROOT, "data", "telegram_sent.json")
 MAX_SINGLE = 8          # more new bids than this in one run are sent as one summary
+LIVE_URL = "https://tenderlelo.com/tenders/state/jharkhand/dhanbad/"
+LIVE_UA = "DhanbadTenderBoard/1.0 (one fetch when a user sends /check in Telegram; +https://github.com/mitaliudani/dhanbad-tenders)"
+COOLDOWN_MIN = 10       # at most one live fetch per 10 minutes, however many people ask
+CHECK_WORDS = ("/check", "check", "/tenders", "tenders", "tender")
+
+
+def live_dhanbad_goods():
+    """Fetch Tenderlelo's public Dhanbad page once (a user asked for it) and return its GeM goods bids."""
+    from bs4 import BeautifulSoup
+    rp = urllib.robotparser.RobotFileParser("https://tenderlelo.com/robots.txt")
+    rp.read()
+    if not rp.can_fetch("DhanbadTenderBoard", LIVE_URL):
+        raise RuntimeError("Tenderlelo's robots.txt does not allow this page")
+    req = urllib.request.Request(LIVE_URL, headers={"User-Agent": LIVE_UA})
+    with urllib.request.urlopen(req, timeout=40) as r:
+        html = r.read().decode("utf-8", "replace")
+    soup = BeautifulSoup(html, "html.parser")
+    rows = []
+    for row in soup.select("article.lp-row"):
+        a = row.select_one("a.lp-t")
+        src = row.select_one(".lp-src")
+        if not a or row.get("data-kind") != "0" or not src or src.get_text(strip=True) != "GeM":
+            continue
+        try:
+            end = dt.datetime.fromtimestamp(int(row.get("data-end", "0")) / 1000, C.IST)
+        except ValueError:
+            end = None
+        if end and end < C.NOW:
+            continue
+        org = row.select_one(".lp-on b")
+        emd = row.select_one(".lp-emd b")
+        rows.append({
+            "title": " ".join(a.get_text(" ", strip=True).split())[:90],
+            "url": urllib.parse.urljoin(LIVE_URL, a["href"]),
+            "org": org.get_text(" ", strip=True) if org else "",
+            "emd": emd.get_text(" ", strip=True) if emd else "",
+            "end": end,
+        })
+    rows.sort(key=lambda r: r["end"] or dt.datetime.max.replace(tzinfo=C.IST))
+    return rows
+
+
+def live_text(rows):
+    if not rows:
+        return ["Tenderlelo pe abhi Dhanbad ka koi GeM goods bid nahi dikha. Poori list: " + LIVE_URL]
+    head = "Dhanbad ke GeM goods bids, jo sabse pehle band honge (Tenderlelo, abhi live):\n"
+    parts, cur = [], head
+    for r in rows:
+        when = r["end"].strftime("%d %b %I:%M %p") if r["end"] else "?"
+        line = "\n• %s – %s\n  %s%s\n  %s\n" % (when, r["title"], r["org"], (" · EMD " + r["emd"]) if r["emd"] else "", r["url"])
+        if len(cur) + len(line) > 3800:
+            parts.append(cur)
+            cur = ""
+        cur += line
+    cur += "\nYe page sirf jaldi band hone wale bids dikhata hai. Poori list: " + LIVE_URL
+    parts.append(cur)
+    return parts
 
 
 def api(method, **params):
@@ -90,6 +148,7 @@ def main():
     except Exception as e:
         print("Telegram not reachable or token wrong:", str(e)[:100])
         return
+    askers = []
     for u in updates:
         chats["offset"] = u["update_id"] + 1
         msg = u.get("message") or {}
@@ -105,13 +164,41 @@ def main():
             chats["chats"][cid] = {"since": C.ymd(C.TODAY)}   # no names: this repository is public
             open_now = sum(1 for b in bids if is_open(b))
             send(cid, "Namaste! Ab Dhanbad ke har naye GeM goods bid ka alert yahan aayega.\n"
-                      "Abhi %d bids open hain. Poori list: %s\nAlerts band karne ke liye /stop bhejiye." % (open_now, SITE))
+                      "Abhi %d bids open hain. Poori list: %s\n\n"
+                      "/check – Tenderlelo se abhi ke Dhanbad GeM goods bids mangwaiye\n"
+                      "/list – website ke 10 sabse jaldi band hone wale bids\n"
+                      "/stop – alerts band" % (open_now, SITE))
+            if text.startswith(CHECK_WORDS):
+                askers.append(cid)
+        elif text.startswith(CHECK_WORDS):
+            askers.append(cid)
         elif text.startswith("/list") or text.startswith("/start"):
             soon = sorted((b for b in bids if is_open(b)), key=lambda b: b.get("end_date") or "9999")[:10]
             body = "\n".join("• %s – %s (%s)" % (when(b), (b.get("title") or "")[:70], b["bid_no"]) for b in soon)
             send(cid, "Sabse pehle band hone wale 10 bids:\n%s\n\nPoori list: %s" % (body or "abhi koi open bid nahi", SITE))
 
-    # 2. new bids and new corrigenda since the last run
+    # 2. /check: one live fetch for everyone who asked in this run
+    if askers:
+        last = chats.get("last_check", "")
+        recent = False
+        try:
+            recent = (C.NOW - dt.datetime.fromisoformat(last)) < dt.timedelta(minutes=COOLDOWN_MIN)
+        except ValueError:
+            pass
+        if recent:
+            replies = ["Abhi-abhi check kiya tha. %d minute baad dobara /check bhejiye, ya seedha dekhiye: %s" % (COOLDOWN_MIN, LIVE_URL)]
+        else:
+            try:
+                replies = live_text(live_dhanbad_goods())
+            except Exception as e:
+                print("Live check failed:", type(e).__name__, str(e)[:100])
+                replies = ["Tenderlelo abhi khul nahi raha. Thodi der baad /check bhejiye, ya seedha dekhiye: " + LIVE_URL]
+            chats["last_check"] = C.NOW.isoformat(timespec="seconds")
+        for cid in dict.fromkeys(askers):
+            for m in replies:
+                send(cid, m)
+
+    # 3. new bids and new corrigenda since the last run
     new, corr = [], []
     for b in bids:
         prev = sent.get(b["bid_no"])
